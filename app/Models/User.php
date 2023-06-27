@@ -6,11 +6,24 @@ use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use App\Helper\Tokenable;
 use Laravel\Sanctum\HasApiTokens;
+use jeremykenedy\LaravelRoles\Traits\HasRoleAndPermission;
 
 class User extends Authenticatable
 {
-    use HasApiTokens, HasFactory, Notifiable;
+    use HasApiTokens, HasFactory, Notifiable, Tokenable;
+    use HasRoleAndPermission;
+    
+
+    public function cities() {
+        return $this->hasMany(City::class);
+    }
+
+    public function items() {
+        return $this->hasMany(Item::class);
+    }
+
 
     /**
      * The attributes that are mass assignable.
