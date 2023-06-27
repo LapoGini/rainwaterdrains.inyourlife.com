@@ -40,19 +40,19 @@
                     <!-- Left Side Of Navbar -->
                     <ul class="navbar-nav me-auto">
                         <li class="nav-item">
-                            <a class="nav-link" href="{{url('/') }}">{{ __('Utenti') }}</a>
+                            <a class="nav-link" href="{{ route('users.index') }}">{{ __('Utenti') }}</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="{{url('/') }}">{{ __('Strade') }}</a>
+                            <a class="nav-link" href="{{ route('streets.index') }}">{{ __('Strade') }}</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="{{url('/') }}">{{ __('Comuni') }}</a>
+                            <a class="nav-link" href="{{ route('cities.index') }}">{{ __('Comuni') }}</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="{{url('/') }}">{{ __('Tags') }}</a>
+                            <a class="nav-link" href="{{ route('tags.index', 'item') }}">{{ __('Tags') }}</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="{{url('/') }}">{{ __('Caditoie') }}</a>
+                            <a class="nav-link" href="{{ route('items.index') }}">{{ __('Caditoie') }}</a>
                         </li>
                     </ul>
 

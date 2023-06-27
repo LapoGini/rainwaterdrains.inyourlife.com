@@ -19,7 +19,7 @@ class CityController extends Controller
             $query->where('slug', '=', 'cliente');
         })->get();
 
-        return view('cities.index', compact('cities', 'users'));
+        return view('pages.cities.index', compact('cities', 'users'));
     }
 
     public function store(CityRequest $request) : RedirectResponse
@@ -30,7 +30,7 @@ class CityController extends Controller
             $city = City::create($validated);
             $city->user()->associate($user)->save();
         }
-        return redirect(route('cities.index'));
+        return redirect(route('pages.cities.index'));
     }
 
 
@@ -45,13 +45,13 @@ class CityController extends Controller
         }
         $city->update($validated);
 
-        return redirect(route('cities.index'));
+        return redirect(route('pages.cities.index'));
     }
 
     public function destroy(City $city) : RedirectResponse
     {
         //$this->authorize('delete', $city);
         $city->delete();
-        return redirect(route('cities.index'));
+        return redirect(route('pages.cities.index'));
     }
 }

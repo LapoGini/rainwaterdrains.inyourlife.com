@@ -15,7 +15,7 @@ class TagController extends Controller
         $domain = request()->route('domain');
         $tags = Tag::where('domain', $domain)->orderBy('id', 'DESC')->get()->groupBy('type');
         
-        return view('tags.index', compact('tags', 'domain'));
+        return view('pages.tags.index', compact('tags', 'domain'));
     }
 
     public function store(TagRequest $request, String $domain) : RedirectResponse
@@ -24,7 +24,7 @@ class TagController extends Controller
         $validated = $request->validated();
         $validated['domain'] = $domain;
         Tag::create($validated);
-        return redirect(route('tags.index', $domain));
+        return redirect(route('pages.tags.index', $domain));
     }
 
 
@@ -34,13 +34,13 @@ class TagController extends Controller
 
         $validated = $request->validated();
         $tag->update($validated);
-        return redirect(route('tags.index', $domain));
+        return redirect(route('pages.tags.index', $domain));
     }
 
     public function destroy(String $domain, Tag $tag) : RedirectResponse
     {
         //$this->authorize('delete', $tag);
         $tag->delete();
-        return redirect(route('tags.index', $domain));
+        return redirect(route('pages.tags.index', $domain));
     }
 }

@@ -18,7 +18,7 @@ class UserController extends Controller
         $users = User::with('roles')->orderBy('id', 'DESC')->get();
         $roles = Role::get();
 
-        return view('users.index' , compact('users', 'roles'));
+        return view('pages.users.index' , compact('users', 'roles'));
     }
 
     public function store(StoreUserRequest $request) : RedirectResponse
@@ -28,7 +28,7 @@ class UserController extends Controller
         if(isset($validated['rolesIds'])){
             $user->roles()->sync($validated['rolesIds']);
         }
-        return redirect(route('users.index'));
+        return redirect(route('pages.users.index'));
     }
 
 
@@ -46,13 +46,13 @@ class UserController extends Controller
         if(isset($validated['rolesIds'])){
             $user->roles()->sync($validated['rolesIds']);
         }
-        return redirect(route('users.index'));
+        return redirect(route('pages.users.index'));
     }
 
     public function destroy(User $user) : RedirectResponse
     {
         //$this->authorize('delete', $user);
         $user->delete();
-        return redirect(route('users.index'));
+        return redirect(route('pages.users.index'));
     }
 }

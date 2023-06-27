@@ -20,7 +20,7 @@ class ItemController extends Controller
         $streets = Street::with('city')->get();
         $tags = Tag::where('domain', 'item')->get();
 
-        return view('items.index', compact('items', 'streets', 'tags'));
+        return view('pages.items.index', compact('items', 'streets', 'tags'));
     }
 
     // public function store(ItemRequest $request) : RedirectResponse
@@ -34,7 +34,7 @@ class ItemController extends Controller
     //     if(isset($validated['tagsIds'])){
     //         $item->tags()->sync($validated['tagsIds']);
     //     }
-    //     return redirect(route('items.index'));
+    //     return redirect(route('pages.items.index'));
     // }
 
 
@@ -54,14 +54,14 @@ class ItemController extends Controller
             $item->tags()->sync($validated['tagsIds']);
         }
 
-        return redirect(route('items.index'));
+        return redirect(route('pages.items.index'));
     }
 
     public function destroy(Item $item) : RedirectResponse
     {
         //$this->authorize('delete', $item);
         $item->delete();
-        return redirect(route('items.index'));
+        return redirect(route('pages.items.index'));
     }
 
     // public function exportCSV() 

@@ -1,6 +1,13 @@
 <?php
 
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\TagController;
+use App\Http\Controllers\UserController;
+use App\Http\Controllers\StreetController;
+use App\Http\Controllers\CityController;
+use App\Http\Controllers\ItemController;
+use App\Http\Controllers\Sync\SyncController;
+use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 
 /*
