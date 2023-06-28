@@ -9,7 +9,7 @@
 
 <div class="w-75 p-5 m-auto">
 
-<form action="{{ route('cities.index') }}" method="POST">
+<form action="{{ route('cities.store') }}" method="POST">
         @csrf
 
         <div class="mb-3">
@@ -39,13 +39,13 @@
 
         <div class="mb-3">
             <label for="client" class="form-label">Cliente</label>
-            <select class="form-select form-select-lg mb-3 @error('clients') is-invalid @enderror" id="client" name="client" aria-label=".form-select-lg example">
+            <select class="form-select form-select-lg mb-3 @error('client') is-invalid @enderror" id="client" name="client" aria-label=".form-select-lg example">
                 <option value="">Seleziona...</option>
                 @foreach($users as $user)
                     <option value="{{ $user->id }}" {{ old('client') && old('client')[0] == $user ? 'selected' : '' }}>{{ $user->name }}</option>
                 @endforeach
             </select>
-            @error('clients')
+            @error('client')
                 <div class="invalid-feedback">
                     {{ $message }}
                 </div>

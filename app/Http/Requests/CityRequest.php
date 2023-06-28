@@ -6,8 +6,6 @@ use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
 use Illuminate\Support\Facades\Config;
-
-
 class CityRequest extends FormRequest
 {
     /**
@@ -32,7 +30,7 @@ class CityRequest extends FormRequest
                 Rule::in(array_keys(Config::get('districts'))),
             ],
             'client'=> 'required|numeric',
-            'pics'=>'required|boolean'
+            'pics'=>'string'
         ];
     }
 }

@@ -33,11 +33,9 @@ class CityController extends Controller
     }
 
     public function store(CityRequest $request) : RedirectResponse
-    {
-        dd();
-        
+    {       
         $validated = $request->validated();
-        $user = User::find($validated['client']);
+        $user = User::find($request['client']);
         if($user) {
             $city = City::create($validated);
             $city->user()->associate($user)->save();
