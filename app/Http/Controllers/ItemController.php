@@ -20,6 +20,8 @@ class ItemController extends Controller
         $streets = Street::with('city')->get();
         $tags = Tag::where('domain', 'item')->get();
 
+        //dd($tags);
+
         return view('pages.items.index', compact('items', 'streets', 'tags'));
     }
 

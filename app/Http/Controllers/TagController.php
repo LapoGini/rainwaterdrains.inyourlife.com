@@ -14,8 +14,12 @@ class TagController extends Controller
     {
         $domain = request()->route('domain');
         $tags = Tag::where('domain', $domain)->orderBy('id', 'DESC')->get()->groupBy('type');
-        
         return view('pages.tags.index', compact('tags', 'domain'));
+    }
+
+    public function create()
+    {
+        return view('pages.tags.create');
     }
 
     public function store(TagRequest $request, String $domain) : RedirectResponse
@@ -24,9 +28,13 @@ class TagController extends Controller
         $validated = $request->validated();
         $validated['domain'] = $domain;
         Tag::create($validated);
-        return redirect(route('pages.tags.index', $domain));
+        return to_route('tags.index', $domain);
     }
 
+    public function edit(Tag $tag)
+    {
+        return view('pages.tags.edit', compact('tag'));
+    }
 
     public function update(TagRequest $request, String $domain, Tag $tag) : RedirectResponse
     {
@@ -34,13 +42,13 @@ class TagController extends Controller
 
         $validated = $request->validated();
         $tag->update($validated);
-        return redirect(route('pages.tags.index', $domain));
+        return to_route('tags.index', $domain);
     }
 
     public function destroy(String $domain, Tag $tag) : RedirectResponse
     {
         //$this->authorize('delete', $tag);
         $tag->delete();
-        return redirect(route('pages.tags.index', $domain));
+        return to_route('tags.index', $domain);
     }
 }

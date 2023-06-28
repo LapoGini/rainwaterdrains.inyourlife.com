@@ -6,7 +6,6 @@ use App\Models\Street;
 use Illuminate\Http\RedirectResponse;
 use App\Http\Requests\StreetRequest;
 use App\Models\City;
-use Inertia\Inertia;
 
 
 class StreetController extends Controller
@@ -19,6 +18,13 @@ class StreetController extends Controller
         return view('pages.streets.index', compact('streets', 'cities'));
     }
 
+    public function create()
+    {
+        $cities = City::get();
+
+        return view('pages.streets.create', compact('cities'));
+    }
+
     public function store(StreetRequest $request) : RedirectResponse
     {
         $validated = $request->validated();
@@ -27,9 +33,15 @@ class StreetController extends Controller
             $street = Street::create($validated);
             $street->city()->associate($city)->save();
         }
-        return redirect(route('pages.streets.index'));
+        return to_route('streets.index');
     }
 
+    public function edit(Street $street)
+    {
+        $cities = City::get();
+
+        return view('pages.streets.edit', compact('street', 'cities'));
+    }
 
     public function update(StreetRequest $request, Street $street) : RedirectResponse
     {
@@ -42,15 +54,13 @@ class StreetController extends Controller
         }
         $street->update($validated);
 
-        return redirect(route('pages.streets.index'));
+        return to_route('streets.index');
     }
 
     public function destroy(Street $street) : RedirectResponse
     {
         //$this->authorize('delete', $street);
         $street->delete();
-        return redirect(route('pages.streets.index'));
+        return to_route('streets.index');
     }
-
-    
 }

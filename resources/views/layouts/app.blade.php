@@ -17,6 +17,8 @@
 
     <!-- Usando Vite -->
     @vite(['resources/js/app.js'])
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 
 <body>
@@ -27,7 +29,7 @@
             <div class="container">
                 <a class="navbar-brand d-flex align-items-center" href="{{ url('/') }}">
                     <div class="logo_laravel">
-                        <img src="{{ asset('build/assets/logo-zanetti-ambiente-9d418d94.png') }}" alt="Logo" class="h-full">
+                        <img src="{{ asset('build/assets/logo-zanetti-ambiente-9d418d94.png') }}" alt="Logo" class="w-75">
                     </div>
                     {{-- config('app.name', 'Laravel') --}}
                 </a>
@@ -93,8 +95,10 @@
             </div>
         </nav>
 
-        <main class="">
-            @yield('content')
+        <main class="bg-body-secondary pb-5 h-100">
+            <div class="pb-5">
+                    @yield('content')
+            </div>
         </main>
     </div>
 </body>
