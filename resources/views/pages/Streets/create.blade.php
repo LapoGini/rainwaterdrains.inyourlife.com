@@ -25,7 +25,7 @@
         <div class="mb-3">
             <label for="Comune" class="form-label">Comune</label>
             <select class="form-select form-select-lg mb-3 @error('select') is-invalid @enderror" id="select" name="city_id" aria-label=".form-select-lg example">
-                <option class="text-body-tertiary" selected>Seleziona...</option>
+                <option class="text-body-tertiary" selected disabled>Seleziona...</option>
                 @foreach($cities as $city)
                     <option value="{{ $city->id }}" {{ old('city_id') && old('city_id')[0] == $city->id ? 'selected' : '' }}>{{ $city->name }}</option>
                 @endforeach

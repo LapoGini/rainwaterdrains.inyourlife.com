@@ -24,11 +24,11 @@
         </div>
 
         <div class="mb-3">
-            <label for="role" class="form-label">Ruolo</label>
+            <label for="role" class="form-label">Provincia</label>
             <select class="form-select form-select-lg mb-3 @error('district') is-invalid @enderror" id="role" name="district" aria-label=".form-select-lg example">
                 <option value="">Seleziona...</option>
                 @foreach($districts as $key => $value)
-                    <option value="{{ $key }}" {{ (is_array(old('district')) && in_array($key, old('district'))) || (old('district') === null && $key == $city->district) ? 'selected' : '' }}>{{ $value }}</option>
+                    <option value="{{ $key }}" {{ (old('district', $city->district) == $key) ? 'selected' : '' }}>{{ $value }}</option>
                 @endforeach                     
             </select>
             @error('district')
@@ -39,14 +39,14 @@
         </div>
 
         <div class="mb-3">
-            <label for="client" class="form-label">Cliente</label>
-            <select class="form-select form-select-lg mb-3 @error('clients') is-invalid @enderror" id="client" name="client" aria-label=".form-select-lg example">
+            <label for="user_id" class="form-label">Cliente</label>
+            <select class="form-select form-select-lg mb-3 @error('user_id') is-invalid @enderror" id="user_id" name="user_id" aria-label=".form-select-lg example">
                 <option value="">Seleziona...</option>
                 @foreach($users as $user)
-                    <option value="{{ $user }}" {{ old('client') && old('client')[0] == $user ? 'selected' : '' }}>{{ $user->name }}</option>
-                @endforeach
+                    <option value="{{ $user->id }}" {{ (old('user_id', $city->user_id) == $user->id) ? 'selected' : '' }}>{{ $user->name }}</option>
+                @endforeach                         
             </select>
-            @error('clients')
+            @error('user_id')
                 <div class="invalid-feedback">
                     {{ $message }}
                 </div>
@@ -56,8 +56,12 @@
         <div class="mb-3">
             <label for="pics" class="form-label">Foto</label>
             <div class="form-check">
-                <label class="form-check-label" for="pics">Includi foto</label>
-                <input class="form-check-input" type="checkbox" id="pics" name="pics" {{ old('pics') === 'Sì' || $city->pics === 'Sì' ? 'checked' : '' }}>
+                <input class="form-check-input" type="radio" id="pics_no" name="pics" value="No" {{ old('pics', $city->pics) === 'No' ? 'checked' : '' }}>
+                <label class="form-check-label" for="pics_no">No</label>
+            </div>
+            <div class="form-check">
+                <input class="form-check-input" type="radio" id="pics_yes" name="pics" value="Sì" {{ old('pics', $city->pics) === 'Sì' ? 'checked' : '' }}>
+                <label class="form-check-label" for="pics_yes">Sì</label>
             </div>
         </div>
 

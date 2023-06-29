@@ -45,7 +45,7 @@
         <div class="mb-3">
             <label for="role" class="form-label">Ruolo</label>
             <select class="form-select form-select-lg mb-3 @error('rolesIds') is-invalid @enderror" id="role" name="rolesIds[]" aria-label=".form-select-lg example">
-                <option value="">Seleziona...</option>
+                <option value="" selected disabled>Seleziona...</option>
                 <option value="1" {{ old('rolesIds') && old('rolesIds')[0] == 1 ? 'selected' : '' }}>Admin</option>
                 <option value="2" {{ old('rolesIds') && old('rolesIds')[0] == 2 ? 'selected' : '' }}>Operatore</option>
                 <option value="3" {{ old('rolesIds') && old('rolesIds')[0] == 3 ? 'selected' : '' }}>Cliente</option>

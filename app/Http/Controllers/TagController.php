@@ -19,21 +19,25 @@ class TagController extends Controller
 
     public function create()
     {
-        return view('pages.tags.create');
+        $domain = request()->route('domain');
+        $tags = Tag::where('domain', $domain)->orderBy('id', 'DESC')->get()->groupBy('type');
+        return view('pages.tags.create', compact('domain', 'tags'));
     }
 
     public function store(TagRequest $request, String $domain) : RedirectResponse
     {
-        
         $validated = $request->validated();
         $validated['domain'] = $domain;
         Tag::create($validated);
         return to_route('tags.index', $domain);
     }
 
-    public function edit(Tag $tag)
+    public function edit(String $domain, $tagId)
     {
-        return view('pages.tags.edit', compact('tag'));
+        $tag = Tag::findOrFail($tagId);
+        $domain = request()->route('domain');
+        $tags = Tag::where('domain', $domain)->orderBy('id', 'DESC')->get()->groupBy('type');
+        return view('pages.tags.edit', compact('tag', 'tags', 'domain'));
     }
 
     public function update(TagRequest $request, String $domain, Tag $tag) : RedirectResponse

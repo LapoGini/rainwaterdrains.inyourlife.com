@@ -50,7 +50,7 @@
                     {{$city->district}}
                 </td>
                 <td class="px-6 py-4">
-                    {{$city->pics?'Sì':'No'}}
+                    {{ $city->pics }}
                 </td>
                 <td class="px-6 py-4">
                     {{$city->user->name}}

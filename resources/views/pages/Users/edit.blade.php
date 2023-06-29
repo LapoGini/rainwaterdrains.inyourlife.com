@@ -46,7 +46,7 @@
         <div class="mb-3">
             <label for="role" class="form-label">Ruolo</label>
             <select class="form-select form-select-lg mb-3 @error('rolesIds') is-invalid @enderror" id="role" name="rolesIds[]" aria-label=".form-select-lg example">
-                <option selected>Seleziona...</option>
+                <option selected disabled>Seleziona...</option>
                 <option value="1" {{ in_array(1, old('rolesIds', $user->roles->pluck('id')->toArray())) ? 'selected' : '' }}>Admin</option>
                 <option value="2" {{ in_array(2, old('rolesIds', $user->roles->pluck('id')->toArray())) ? 'selected' : '' }}>Operatore</option>
                 <option value="3" {{ in_array(3, old('rolesIds', $user->roles->pluck('id')->toArray())) ? 'selected' : '' }}>Cliente</option>

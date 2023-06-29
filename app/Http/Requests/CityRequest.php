@@ -29,8 +29,8 @@ class CityRequest extends FormRequest
                 'required',
                 Rule::in(array_keys(Config::get('districts'))),
             ],
-            'client'=> 'required|numeric',
-            'pics'=>'string'
+            'user_id'=> 'required|numeric',
+            'pics'=>'required|string'
         ];
     }
 }

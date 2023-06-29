@@ -9,7 +9,7 @@
 
 <div class="w-75 p-5 m-auto">
 
-<form action="{{ route('cities.store') }}" method="POST">
+    <form action="{{ route('cities.store') }}" method="POST">
         @csrf
 
         <div class="mb-3">
@@ -25,10 +25,10 @@
         <div class="mb-3">
             <label for="district" class="form-label">Provincia</label>
             <select class="form-select form-select-lg mb-3 @error('district') is-invalid @enderror" id="district" name="district" aria-label=".form-select-lg example">
-                <option class="text-body-tertiary" selected>Seleziona...</option>
+                <option class="text-body-tertiary" selected disabled>Seleziona...</option>
                 @foreach($districts as $key => $value)
-                    <option value="{{ $key }}" {{ old('district') && old('district')[0] == $key ? 'selected' : '' }}>{{ $value }}</option>
-                @endforeach
+                    <option value="{{ $key }}" {{ old('district') == $key ? 'selected' : '' }}>{{ $value }}</option>
+                @endforeach                    
             </select>
             @error('district')
             <div class="invalid-feedback">
@@ -38,14 +38,14 @@
         </div>
 
         <div class="mb-3">
-            <label for="client" class="form-label">Cliente</label>
-            <select class="form-select form-select-lg mb-3 @error('client') is-invalid @enderror" id="client" name="client" aria-label=".form-select-lg example">
+            <label for="user_id" class="form-label">Cliente</label>
+            <select class="form-select form-select-lg mb-3 @error('user_id') is-invalid @enderror" id="user_id" name="user_id" aria-label=".form-select-lg example">
                 <option value="">Seleziona...</option>
                 @foreach($users as $user)
-                    <option value="{{ $user->id }}" {{ old('client') && old('client')[0] == $user ? 'selected' : '' }}>{{ $user->name }}</option>
+                    <option value="{{ $user->id }}" {{ old('user_id') == $user->id ? 'selected' : '' }}>{{ $user->name }}</option>
                 @endforeach
             </select>
-            @error('client')
+            @error('user_id')
                 <div class="invalid-feedback">
                     {{ $message }}
                 </div>
@@ -55,8 +55,12 @@
         <div class="mb-3">
             <label for="pics" class="form-label">Foto</label>
             <div class="form-check">
-                <label class="form-check-label" for="pics">Includi foto</label>
-                <input class="form-check-input" type="checkbox" id="pics" name="pics">
+                <input class="form-check-input" type="radio" id="pics_no" name="pics" value="No" {{ old('pics') === 'No' ? 'checked' : '' }}>
+                <label class="form-check-label" for="pics_no">No</label>
+            </div>
+            <div class="form-check">
+                <input class="form-check-input" type="radio" id="pics_yes" name="pics" value="Sì" {{ old('pics') === 'Sì' ? 'checked' : '' }}>
+                <label class="form-check-label" for="pics_yes">Sì</label>
             </div>
         </div>
 

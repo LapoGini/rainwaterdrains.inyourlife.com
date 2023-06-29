@@ -26,10 +26,10 @@
         <div class="mb-3">
             <label for="role" class="form-label">Comune</label>
             <select class="form-select form-select-lg mb-3 @error('role') is-invalid @enderror" id="role" name="city_id" aria-label=".form-select-lg example">
-                <option selected>Seleziona...</option>
+                <option selected disabled>Seleziona...</option>
                 @foreach($cities as $city)
-                    <option value="{{ $city->id }}" {{ old('city_id') && old('city_id')[0] == $city->id ? 'selected' : '' }}>{{ $city->name }}</option>
-                @endforeach
+                    <option value="{{ $city->id }}" {{ (old('city_id', $street->city_id) == $city->id) ? 'selected' : '' }}>{{ $city->name }}</option>
+                @endforeach                        
             </select>
             @error('role')
             <div class="invalid-feedback">
