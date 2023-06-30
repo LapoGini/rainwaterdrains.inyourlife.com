@@ -8,7 +8,7 @@
 </div>
 
 <div class="container my-5 mx-auto relative p-5 bg-white overflow-x-auto">
-    <table class="w-100 text-sm text-left text-gray-500 dark:text-gray-400">
+    <table id="zanetti-table-download" class="table table-hover w-100 text-sm text-left text-gray-500 dark:text-gray-400">
         <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
             <tr>
                 <th scope="col" class="px-6 py-3">
@@ -44,14 +44,16 @@
                     {{round($item->height)}}L x {{round($item->width)}}S x {{round($item->depth)}}P
                 </td>
                 <td class="px-6 py-4">
-                    @foreach ($tags as $type => $tag)
-                    <p>
-                        <small class="font-bold mr-1">{{ $type }}:</small>
-                        @foreach ($tag as $ta)
-                        <span class="bg-gray-100 text-gray-800 text-xs font-medium mr-2 px-2.5 py-0.5 rounded dark:bg-gray-700 dark:text-gray-300">{{ $tag->name }}</span>
+                    @if (isset($groupedTags[$item->id]))
+                        @foreach ($groupedTags[$item->id] as $type => $tags)
+                            <p>
+                                <small class="font-bold mr-1">{{ $type }}:</small>
+                                @foreach ($tags as $tag)
+                                    <span class="bg-gray-100 text-gray-800 text-xs font-medium mr-2 px-2.5 py-0.5 rounded dark:bg-gray-700 dark:text-gray-300">{{ $tag->name }}</span>
+                                @endforeach
+                            </p>
                         @endforeach
-                    </p>
-                    @endforeach
+                    @endif
                 </td>
                 <td className="px-6 py-4">
                     {{$item->user->name}}

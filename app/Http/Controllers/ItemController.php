@@ -20,9 +20,20 @@ class ItemController extends Controller
         $streets = Street::with('city')->get();
         $tags = Tag::where('domain', 'item')->get();
 
-        //dd($tags);
+        $groupedTags = [];
 
-        return view('pages.items.index', compact('items', 'streets', 'tags'));
+        foreach ($items as $item) {
+            $itemTags = $item->tags;
+
+            foreach ($itemTags as $tag) {
+                $type = $tag->type;
+                $groupedTags[$item->id][$type][] = $tag;
+            }
+        }
+
+        //dd($groupedTags);
+
+        return view('pages.items.index', compact('items', 'groupedTags'));
     }
 
     // public function store(ItemRequest $request) : RedirectResponse
