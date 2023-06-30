@@ -21,8 +21,18 @@ $(document).ready(function() {
 $(document).ready(function() {
     $('#zanetti-table-download').DataTable({
         dom: 'Bfrtip',
+        language: {
+            url: '//cdn.datatables.net/plug-ins/1.13.4/i18n/it-IT.json',
+        },
         buttons: [
-            'csv', 'excel'
-        ]
+            {
+              extend: 'csv',
+              text: 'DOWNLOAD CSV'
+            },
+            {
+              extend: 'excel',
+              text: 'DOWNLOAD XLSX'
+            }
+          ]
     });
 });

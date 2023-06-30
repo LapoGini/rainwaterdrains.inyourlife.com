@@ -16,7 +16,7 @@
 
     @foreach ($tags as $type => $tagCollection)
 
-        <h2 className="text-3xl mt-4">{{$type}}</h2>
+        <h2 class="text-3xl fw-bold mt-5">{{$type}}</h2>
         
         <table class="zanetti-table" class="table table-hover w-100 text-sm text-left text-gray-500 dark:text-gray-400">
             <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
