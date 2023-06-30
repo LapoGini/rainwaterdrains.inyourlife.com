@@ -31,8 +31,6 @@ class ItemController extends Controller
             }
         }
 
-        //dd($groupedTags);
-
         return view('pages.items.index', compact('items', 'groupedTags'));
     }
 
@@ -49,6 +47,25 @@ class ItemController extends Controller
     //     }
     //     return redirect(route('pages.items.index'));
     // }
+
+    public function edit(Item $item)
+    {
+        $items = Item::with('street', 'street.city', 'tags', 'user')->orderBy('id', 'DESC')->paginate(50);
+
+        $groupedTags = [];
+
+        foreach ($items as $item) {
+            $itemTags = $item->tags;
+
+            foreach ($itemTags as $tag) {
+                $type = $tag->type;
+                $groupedTags[$item->id][$type][] = $tag;
+            }
+        }
+
+        return view('pages.items.edit', compact('item', 'groupedTags'));
+    }
+
 
 
     public function update(ItemRequest $request, Item $item) : RedirectResponse

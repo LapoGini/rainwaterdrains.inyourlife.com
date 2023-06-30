@@ -21,7 +21,7 @@ class CitiesStreetsItemsTagsSeeder extends Seeder
         $streets = Street::factory(1500)->make()->each(function($street) use ($cities) {
             $street->city()->associate($cities->random())->save();
         });
-        $items = Item::factory(500)->make([
+        $items = Item::factory(50000)->make([
             'user_id' => 2
             ])->each(function($item) use ($streets, $tags) {
             $item->street()->associate($streets->random())->save();
