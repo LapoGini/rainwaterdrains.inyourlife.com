@@ -13,17 +13,17 @@ class StreetController extends Controller
 
     public function getAll() 
     {
-        $streets = Street::with('city')->orderBy('id', 'DESC')->get();
+        $streets = Street::with('city')->select('*','id as codice_via','name as strada_nome','city_id as comune_id')->orderBy('id', 'DESC')->get();
         
         return Functions::setResponse($streets, 'Strade non trovate');
     }
 
     public function getByCityId(int $city_id) 
     {
-        $streets = Street::with('city')->whereHas('city', function (Builder $query) use ($city_id) {
+        /*$streets = Street::with('city')->whereHas('city', function (Builder $query) use ($city_id) {
             $query->where('id', '=', $city_id);
-        })->get();
-        
+        })->get();*/
+        $streets = Street::where('city_id', $city_id)->select('id as codice_via','name as strada_nome')->get();
         return Functions::setResponse($streets, 'Strade non trovate');
     }
 }
