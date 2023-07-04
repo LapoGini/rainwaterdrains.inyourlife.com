@@ -49,9 +49,7 @@
                         </td>
                         <td class="px-6 py-4">
                             <div class="flex-none">
-                                <a class="px-3 py-2 rounded me-3 bg-black text-white" href="{{ route('tags.edit', ['domain' => $domain, 'tag' => $tag]) }}">
-                                    <i class="fas fa-pen-to-square"></i>
-                                </a>
+                                <a class="px-3 py-2 rounded me-3 bg-black text-white" href="{{ route('tags.edit', ['domain' => $domain, 'tag' => $tag]) }}"><i class="fas fa-pen-to-square"></i></a>
                                 <a class="px-3 py-2 rounded bg-danger text-white" href="{{ route('tags.destroy', ['domain' => $domain, 'tag' => $tag]) }}" onclick="event.preventDefault(); if (confirm('Sei sicuro di voler eliminare questo utente?')) { document.getElementById('delete-form').submit(); }">
                                     <i class="fa-solid fa-trash"></i>
                                 </a>
