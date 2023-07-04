@@ -11,11 +11,3 @@ import 'datatables.net-buttons/js/buttons.html5.mjs';
 import 'datatables.net-buttons/js/buttons.print.mjs';
 import 'laravel-datatables-vite';
 
-$(document).ready(function() {
-    $('#zanetti-table, .zanetti-table').DataTable({
-        language: {
-            url: '//cdn.datatables.net/plug-ins/1.13.4/i18n/it-IT.json',
-        }
-    });
-});
-

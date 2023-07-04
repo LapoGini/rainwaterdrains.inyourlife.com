@@ -17,6 +17,7 @@ return new class extends Migration
             $table->string('district', 2);
             $table->string('pics');
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
+            $table->boolean('status')->default(1);
             $table->timestamps();
         });
     }

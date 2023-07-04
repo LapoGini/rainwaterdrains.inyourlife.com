@@ -4,7 +4,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class ItemRequest extends FormRequest
+class FilteredDataRequest extends FormRequest
 {
 
     /**
@@ -23,12 +23,13 @@ class ItemRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'height'=> 'required|numeric',
-            'width'=> 'required|numeric',
-            'depth'=> 'required|numeric',
-            'note' => 'string|nullable',
-            'street_id'=> 'required|numeric',
-            'tagsIds' => 'array',
+            'clientId' => 'numeric|nullable',
+            'comuneId' => 'numeric|nullable',
+            'streetId' => 'numeric|nullable',
+            'selectedTags' => 'array|nullable',
+            'fromDateId' => 'date|nullable',
+            'toDataId' => 'date|nullable',
+            'operatorId' => 'numeric|nullable',
         ];
     }
 }

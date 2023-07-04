@@ -13,6 +13,10 @@ return new class extends Migration
     {
         Schema::create('items', function (Blueprint $table) {
             $table->id();
+            $table->string('id_sd')->nullable();
+            $table->string('id_da_app')->nullable();
+            $table->timestamp('time_stamp_pulizia')->nullable();
+            $table->string('civic')->nullable();
             $table->decimal('longitude', 10, 7);
             $table->decimal('latitude', 10, 7);
             $table->decimal('altitude', 10, 7);
@@ -24,6 +28,8 @@ return new class extends Migration
             $table->string('note',500)->nullable();
             $table->foreignId('street_id')->constrained()->cascadeOnDelete();
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
+            $table->timestamp('cancellabile')->nullable();
+            $table->timestamp('deleted_at')->nullable();
             $table->timestamps();
         });
     }

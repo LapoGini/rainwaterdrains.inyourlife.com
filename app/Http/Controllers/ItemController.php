@@ -5,21 +5,104 @@ namespace App\Http\Controllers;
 use App\Models\Item;
 use Illuminate\Http\RedirectResponse;
 use App\Http\Requests\ItemRequest;
+use App\Http\Requests\FilteredDataRequest;
 use App\Models\City;
 use App\Models\Street;
+use App\Models\User;
 use App\Models\Tag;
-use Inertia\Inertia;
-
+use App\DataTables\ItemsDataTable;
+use Carbon\Carbon;
 
 class ItemController extends Controller
 {
-    public function index() 
+    public function index(ItemsDataTable $dataTable) 
     {
         $items = Item::with('street', 'street.city', 'tags', 'user')->orderBy('id', 'DESC')->paginate(50);
-        // TODO: caricare con ajax prima comuni, poi strade nel form di modifica
         $streets = Street::with('city')->get();
-        $tags = Tag::where('domain', 'item')->get();
+        $comuni = City::all();
+        $clients = User::join('role_user', 'users.id', '=', 'role_user.user_id')->join('roles', 'role_user.role_id', '=', 'roles.id')->where('roles.id', 3)->select('users.*')->get();
+        $tagTypes = Tag::where('domain', 'item')->distinct('type')->pluck('type');
+        $operators = User::join('role_user', 'users.id', '=', 'role_user.user_id')->join('roles', 'role_user.role_id', '=', 'roles.id')->where('roles.id', 2)->select('users.*')->get();
+        $itemsDate = Item::pluck('time_stamp_pulizia');
 
+        $tags = Tag::where('domain', 'item')->get();
+        $groupedTags = [];
+        foreach ($items as $item) {
+            $itemTags = $item->tags;
+            foreach ($itemTags as $tag) {
+                $type = $tag->type;
+                $groupedTags[$item->id][$type][] = $tag;
+            }
+        }
+
+        $groupedTagsType = [];
+        foreach ($tagTypes as $type) {
+            $tags = Tag::where('domain', 'item')->where('type', $type)->get();
+            $groupedTagsType[$type] = $tags;
+        }
+
+        //dd($groupedTags);
+
+        return $dataTable->render('pages.items.index', compact('items', 'clients', 'operators', 'streets', 'comuni', 'tags', 'itemsDate', 'tagTypes', 'groupedTags', 'groupedTagsType'));
+        //return $dataTable->render('pages.items.index');
+    }
+
+    // devo recuperare la colonna id_da_app che si trova in items
+        // dopo di che la devo trasformare in un array di elementi che sono separati da '-'
+        // facendo explode o implode devo recuperare solamente il primo dato cioè il time stamp
+        // devo recuperare il dato e trasformarlo in una data effettiva
+        // devo pushare tutte le date dentro ad un array
+
+    public function filterData(FilteredDataRequest $request)
+    {
+        $clientId = $request->input('clientId');
+        $comuneId = $request->input('comuneId');
+        $streetId = $request->input('streetId');
+        $fromDateId = $request->input('fromDateId');
+        $toDateId = $request->input('toDateId');
+        $operatorId = $request->input('operatorId');
+        $selectedTags = $request->input('tags');
+
+        $query = Item::with('street', 'street.city', 'tags', 'user');
+
+        if ($clientId) {
+            $query->whereHas('user', function($query) use ($clientId) {
+                $query->where('id', $clientId);
+            });
+        }
+
+        if ($comuneId) {
+            $query->whereHas('street.city', function($query) use ($comuneId) {
+                $query->where('id', $comuneId);
+            });
+        }
+
+        if ($streetId) {
+            $query->whereHas('street', function($query) use ($streetId) {
+                $query->where('id', $streetId);
+            });
+        }
+
+        if ($fromDateId && $toDateId) {
+            $fromDateId = new Carbon($fromDateId);
+            $toDateId = new Carbon($toDateId);
+            $query->whereBetween('time_stamp_pulizia', [$fromDateId->startOfDay(),  $toDateId->endOfDay()]);
+        }
+
+        if ($operatorId) {
+            $query->whereHas('user', function($query) use ($operatorId) {
+                $query->where('id', $operatorId);
+            });
+        }
+
+        if ($selectedTags) {
+            $query->whereHas('tags', function($query) use ($selectedTags) {
+                $query->whereIn('tags.id', $selectedTags);
+            });
+        }
+
+        $items = $query->orderBy('id', 'DESC')->get();
+        
         $groupedTags = [];
 
         foreach ($items as $item) {
@@ -31,8 +114,9 @@ class ItemController extends Controller
             }
         }
 
-        return view('pages.items.index', compact('items', 'groupedTags'));
+        return view('pages.items.filtered_data', compact('items', 'groupedTags'));
     }
+
 
     // public function store(ItemRequest $request) : RedirectResponse
     // {
@@ -51,19 +135,30 @@ class ItemController extends Controller
     public function edit(Item $item)
     {
         $items = Item::with('street', 'street.city', 'tags', 'user')->orderBy('id', 'DESC')->paginate(50);
+        $streets = Street::with('city')->get();
+        $comuni = City::all();
+        $clients = User::join('role_user', 'users.id', '=', 'role_user.user_id')->join('roles', 'role_user.role_id', '=', 'roles.id')->where('roles.id', 3)->select('users.*')->get();
+        $tagTypes = Tag::where('domain', 'item')->distinct('type')->pluck('type');
+        $operators = User::join('role_user', 'users.id', '=', 'role_user.user_id')->join('roles', 'role_user.role_id', '=', 'roles.id')->where('roles.id', 2)->select('users.*')->get();
+        $itemsDate = Item::pluck('time_stamp_pulizia');
 
+        $tags = Tag::where('domain', 'item')->get();
         $groupedTags = [];
-
         foreach ($items as $item) {
             $itemTags = $item->tags;
-
             foreach ($itemTags as $tag) {
                 $type = $tag->type;
                 $groupedTags[$item->id][$type][] = $tag;
             }
         }
 
-        return view('pages.items.edit', compact('item', 'groupedTags'));
+        $groupedTagsType = [];
+        foreach ($tagTypes as $type) {
+            $tags = Tag::where('domain', 'item')->where('type', $type)->get();
+            $groupedTagsType[$type] = $tags;
+        }
+
+        return view('pages.items.edit', compact('item', 'items', 'clients', 'operators', 'streets', 'comuni', 'tags', 'itemsDate', 'tagTypes', 'groupedTags', 'groupedTagsType'));
     }
 
 
