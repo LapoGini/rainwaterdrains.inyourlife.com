@@ -157,9 +157,7 @@
                 </td>
                 <td className="px-6 py-4">
                     <div className="flex-none">
-                        <a class="px-3 py-2 rounded me-3 bg-black text-white" href="{{ route('items.edit', $item) }}">
-                            <i class="fas fa-pen-to-square"></i>
-                        </a>
+                        <a class="px-3 py-2 rounded me-3 bg-black text-white" href="{{ route('items.edit', $item) }}"><i class="fas fa-pen-to-square"></i></a>
                         <a class="px-3 py-2 rounded bg-danger text-white" href="{{ route('items.destroy', $item) }}" onclick="event.preventDefault(); if (confirm('Sei sicuro di voler eliminare questo comune?')) { document.getElementById('delete-form').submit(); }">
                             <i class="fa-solid fa-trash"></i>
                         </a>

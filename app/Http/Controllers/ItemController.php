@@ -43,7 +43,7 @@ class ItemController extends Controller
 
         //dd($groupedTags);
 
-        return $dataTable->render('pages.items.index', compact('items', 'clients', 'operators', 'streets', 'comuni', 'tags', 'itemsDate', 'tagTypes', 'groupedTags', 'groupedTagsType'));
+        return $dataTable->render('pages.Items.index', compact('items', 'clients', 'operators', 'streets', 'comuni', 'tags', 'itemsDate', 'tagTypes', 'groupedTags', 'groupedTagsType'));
         //return $dataTable->render('pages.items.index');
     }
 
@@ -114,7 +114,7 @@ class ItemController extends Controller
             }
         }
 
-        return view('pages.items.filtered_data', compact('items', 'groupedTags'));
+        return view('pages.Items.filtered_data', compact('items', 'groupedTags'));
     }
 
 
@@ -158,10 +158,8 @@ class ItemController extends Controller
             $groupedTagsType[$type] = $tags;
         }
 
-        return view('pages.items.edit', compact('item', 'items', 'clients', 'operators', 'streets', 'comuni', 'tags', 'itemsDate', 'tagTypes', 'groupedTags', 'groupedTagsType'));
+        return view('pages.Items.edit', compact('item', 'items', 'clients', 'operators', 'streets', 'comuni', 'tags', 'itemsDate', 'tagTypes', 'groupedTags', 'groupedTagsType'));
     }
-
-
 
     public function update(ItemRequest $request, Item $item) : RedirectResponse
     {
@@ -179,7 +177,7 @@ class ItemController extends Controller
             $item->tags()->sync($validated['tagsIds']);
         }
 
-        return redirect(route('pages.items.index'));
+        return redirect(route('pages.Items.index'));
     }
 
     public function destroy(Item $item) : RedirectResponse

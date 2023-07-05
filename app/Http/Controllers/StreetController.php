@@ -15,14 +15,14 @@ class StreetController extends Controller
         $streets = Street::with('city')->orderBy('id', 'DESC')->paginate(50);
         $cities = City::get();
 
-        return view('pages.streets.index', compact('streets', 'cities'));
+        return view('pages.Streets.index', compact('streets', 'cities'));
     }
 
     public function create()
     {
         $cities = City::get();
 
-        return view('pages.streets.create', compact('cities'));
+        return view('pages.Streets.create', compact('cities'));
     }
 
     public function store(StreetRequest $request) : RedirectResponse
@@ -33,14 +33,14 @@ class StreetController extends Controller
             $street = Street::create($validated);
             $street->city()->associate($city)->save();
         }
-        return to_route('streets.index');
+        return to_route('Streets.index');
     }
 
     public function edit(Street $street)
     {
         $cities = City::get();
 
-        return view('pages.streets.edit', compact('street', 'cities'));
+        return view('pages.Streets.edit', compact('street', 'cities'));
     }
 
     public function update(StreetRequest $request, Street $street) : RedirectResponse
@@ -54,13 +54,13 @@ class StreetController extends Controller
         }
         $street->update($validated);
 
-        return to_route('streets.index');
+        return to_route('Streets.index');
     }
 
     public function destroy(Street $street) : RedirectResponse
     {
         //$this->authorize('delete', $street);
         $street->delete();
-        return to_route('streets.index');
+        return to_route('Streets.index');
     }
 }

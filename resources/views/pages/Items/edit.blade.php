@@ -14,9 +14,9 @@
         @method('PUT')
 
         <div class="mb-3">
-            <label for="operator" class="form-label">Operatore</label>
-            <input disabled type="text" class="form-control @error('operator') is-invalid @enderror" id="operator" name="operator" value="{{ old('operator', $item->user->name) }}">
-            @error('operator')
+            <label for="name" class="form-label">Operatore</label>
+            <input disabled type="text" class="form-control @error('name') is-invalid @enderror" id="name" name="name" value="{{ old('name', $item->user->name) }}">
+            @error('name')
             <div class="invalid-feedback">
             {{ $message }}
             </div>
@@ -36,27 +36,27 @@
         </div>
 
         <div class="mb-3">
-            <label for="lat" class="form-label">Latitudine</label>
-            <input disabled type="text" class="form-control @error('lat') is-invalid @enderror" id="lat" name="lat" value="{{ old('lat', $item->latitude) }}">
-            @error('lat')
+            <label for="latitude" class="form-label">Latitudine</label>
+            <input disabled type="text" class="form-control @error('latitude') is-invalid @enderror" id="latitude" name="latitude" value="{{ old('latitude', $item->latitude) }}">
+            @error('latitude')
             <div class="invalid-feedback">
             {{ $message }}
             </div>
             @enderror
         </div>
         <div class="mb-3">
-            <label for="long" class="form-label">Longitudine</label>
-            <input disabled type="text" class="form-control @error('long') is-invalid @enderror" id="long" name="long" value="{{ old('long', $item->longitude) }}">
-            @error('long')
+            <label for="longitude" class="form-label">Longitudine</label>
+            <input disabled type="text" class="form-control @error('longitude') is-invalid @enderror" id="longitude" name="longitude" value="{{ old('longitude', $item->longitude) }}">
+            @error('longitude')
             <div class="invalid-feedback">
             {{ $message }}
             </div>
             @enderror
         </div>
         <div class="mb-3">
-            <label for="alt" class="form-label">Altezza</label>
-            <input disabled type="text" class="form-control @error('alt') is-invalid @enderror" id="alt" name="alt" value="{{ old('alt', $item->altitude) }}">
-            @error('alt')
+            <label for="altitude" class="form-label">Altezza</label>
+            <input disabled type="text" class="form-control @error('altitude') is-invalid @enderror" id="altitude" name="altitude" value="{{ old('altitude', $item->altitude) }}">
+            @error('altitude')
             <div class="invalid-feedback">
             {{ $message }}
             </div>
@@ -64,9 +64,9 @@
         </div>
 
         <div class="mb-3">
-            <label for="date" class="form-label">Data</label>
-            <input type="text" class="form-control @error('date') is-invalid @enderror" id="date" name="date" value="{{ old('name', $item->time_stamp_pulizia) }}">
-            @error('date')
+            <label for="time_stamp_pulizia" class="form-label">Data</label>
+            <input type="text" class="form-control @error('time_stamp_pulizia') is-invalid @enderror" id="time_stamp_pulizia" name="time_stamp_pulizia" value="{{ old('name', $item->time_stamp_pulizia) }}">
+            @error('time_stamp_pulizia')
             <div class="invalid-feedback">
             {{ $message }}
             </div>

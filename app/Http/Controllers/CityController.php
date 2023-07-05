@@ -19,7 +19,7 @@ class CityController extends Controller
             $query->where('slug', '=', 'cliente');
         })->get();
 
-        return view('pages.cities.index', compact('cities', 'users'));
+        return view('pages.Cities.index', compact('cities', 'users'));
     }
 
     public function create()
@@ -29,7 +29,7 @@ class CityController extends Controller
             $query->where('slug', '=', 'cliente');
         })->get();
 
-        return view('pages.cities.create', compact('districts', 'users'));
+        return view('pages.Cities.create', compact('districts', 'users'));
     }
 
     public function store(CityRequest $request) : RedirectResponse
@@ -42,7 +42,7 @@ class CityController extends Controller
             $city->user()->associate($user)->save();
         }
 
-        return to_route('cities.index');
+        return to_route('Cities.index');
     }
 
     public function edit(City $city)
@@ -52,7 +52,7 @@ class CityController extends Controller
             $query->where('slug', '=', 'cliente');
         })->get();
 
-        return view('pages.cities.edit', compact('city', 'districts', 'users'));
+        return view('pages.Cities.edit', compact('city', 'districts', 'users'));
     }
 
     public function update(CityRequest $request, City $city) : RedirectResponse
@@ -66,13 +66,13 @@ class CityController extends Controller
         }
         $city->update($validated);
 
-        return to_route('cities.index');
+        return to_route('Cities.index');
     }
 
     public function destroy(City $city) : RedirectResponse
     {
         //$this->authorize('delete', $city);
         $city->delete();
-        return to_route('cities.index');
+        return to_route('Cities.index');
     }
 }
