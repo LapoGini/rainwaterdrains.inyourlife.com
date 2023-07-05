@@ -33,7 +33,7 @@ class StreetController extends Controller
             $street = Street::create($validated);
             $street->city()->associate($city)->save();
         }
-        return to_route('Streets.index');
+        return to_route('streets.index');
     }
 
     public function edit(Street $street)
@@ -54,13 +54,13 @@ class StreetController extends Controller
         }
         $street->update($validated);
 
-        return to_route('Streets.index');
+        return to_route('streets.index');
     }
 
     public function destroy(Street $street) : RedirectResponse
     {
         //$this->authorize('delete', $street);
         $street->delete();
-        return to_route('Streets.index');
+        return to_route('streets.index');
     }
 }

@@ -23,12 +23,20 @@ class ItemRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'height'=> 'required|numeric',
-            'width'=> 'required|numeric',
-            'depth'=> 'required|numeric',
-            'note' => 'string|nullable',
-            'street_id'=> 'required|numeric',
-            'tagsIds' => 'array',
+            'name' => 'required|string',
+            'city_id' => 'required',
+            'latitude' => 'required|numeric',
+            'longitude' => 'required|numeric',
+            'altitude' => 'required|numeric',
+            'time_stamp_pulizia' => 'required|date',
+            'street' => 'required|string',
+            'note' => 'nullable|string',
+            'civic' => 'required|numeric',
+            'height' => 'required|numeric',
+            'width' => 'required|numeric',
+            'depth' => 'required|numeric',
+            'tags' => 'nullable|array',
+            'tags.*' => 'exists:tags,id',
         ];
     }
 }

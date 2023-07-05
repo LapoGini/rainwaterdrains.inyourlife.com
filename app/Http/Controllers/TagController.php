@@ -29,7 +29,7 @@ class TagController extends Controller
         $validated = $request->validated();
         $validated['domain'] = $domain;
         Tag::create($validated);
-        return to_route('Tags.index', $domain);
+        return to_route('tags.index', $domain);
     }
 
     public function edit(String $domain, $tagId)
@@ -46,13 +46,13 @@ class TagController extends Controller
 
         $validated = $request->validated();
         $tag->update($validated);
-        return to_route('Tags.index', $domain);
+        return to_route('tags.index', $domain);
     }
 
     public function destroy(String $domain, Tag $tag) : RedirectResponse
     {
         //$this->authorize('delete', $tag);
         $tag->delete();
-        return to_route('Tags.index', $domain);
+        return to_route('tags.index', $domain);
     }
 }

@@ -31,7 +31,7 @@ class UserController extends Controller
         if (isset($validated['rolesIds'])){
             $user->roles()->sync($validated['rolesIds']);
         }
-        return to_route('Users.index');
+        return to_route('users.index');
     }
 
     public function edit(User $user)
@@ -53,13 +53,13 @@ class UserController extends Controller
         if(isset($validated['rolesIds'])){
             $user->roles()->sync($validated['rolesIds']);
         }
-        return to_route('Users.index');
+        return to_route('users.index');
     }
 
     public function destroy(User $user) : RedirectResponse
     {
         //$this->authorize('delete', $user);
         $user->delete();
-        return to_route('Users.index');
+        return to_route('users.index');
     }
 }

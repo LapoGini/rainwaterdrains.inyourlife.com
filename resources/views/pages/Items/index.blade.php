@@ -1,20 +1,17 @@
 @extends('layouts.app')
 @section('content')
 
-<div class="bg-white">
-    <h2 class="container mx-auto py-3">
+<div class="mx-5 pb-5 relative bg-white overflow-x-auto">
+    <h2 class="py-3">
         Caditoie
     </h2>
-</div>
 
-<div class="container my-5 mx-auto relative p-5 bg-white overflow-x-auto">
-
-    <div class="form-filter py-4">
+    <div class="form-filter p-4 bg-body-secondary mb-5">
         <form action="">
             @csrf
 
-            <div class="box-form d-flex">
-                <div class="box px-3 col-4">
+            <div class="box-form row">
+                <div class="box px-3 col-12 col-md-6 col-lg-4">
                     <div class="mb-4">
                         <label for="client" class="fw-light fst-italic d-block text-gray-700 text-sm font-bold mb-2">
                             Seleziona un cliente:
@@ -49,19 +46,19 @@
                         </select>
                     </div>
                 </div>
-                <div class="box px-3 col-4">
-                    <div class="mb-4">
-                        <label for="street" class="fw-light fst-italic d-block text-center text-gray-700 text-sm font-bold mb-2">
-                            Seleziona un periodo di tempo
-                        </label>
-                        <label for="street" class="fw-light fst-italic text-gray-700 text-sm font-bold mb-2">
+                <div class="box px-3 col-12 col-md-6 col-lg-4">
+                    <label for="street" class="fw-light fst-italic d-block text-center text-gray-700 text-sm font-bold mb-2">
+                        Seleziona un periodo di tempo
+                    </label>
+                    <div class="mb-3 input-group">
+                        <label for="street" class="input-group-text fw-light fst-italic text-gray-700 text-sm font-bold mb-2">
                             Da:
                         </label>
-                        <input type="date" id="fromDate" name="fromDate">
-                        <label for="street" class="fw-light fst-italic text-gray-700 text-sm font-bold mb-2">
+                        <input type="date" id="fromDate" name="fromDate" class="form-control mb-2">
+                        <label for="street" class="input-group-text fw-light fst-italic text-gray-700 text-sm font-bold mb-2">
                             A:
                         </label>
-                        <input type="date" id="toDate" name="toDate">
+                        <input type="date" id="toDate" name="toDate" class="form-control mb-2">
                     </div>
                     <div class="mb-4">
                         <label for="operator" class="fw-light fst-italic d-block text-gray-700 text-sm font-bold mb-2">
@@ -75,35 +72,42 @@
                         </select>
                     </div>
                 </div>
-                <div class="box px-3 col-4">
+                <div class="box px-3 col-12 col-md-6 col-lg-4">
                     <div class="mb-4">
                         @foreach($groupedTagsType as $type => $tags)
-                            <label class="fw-light fst-italic d-block text-gray-700 text-sm font-bold mb-2 pt-4">
+                            <label class="fw-light fst-italic d-block text-gray-700 text-sm font-bold mb-2">
                                 {{$type}}:
                             </label>
-                            @foreach($tags as $tag)
-                                <label for="tag_{{$tag->id}}" class="inline-flex items-center">
-                                    <input id="tag_{{$tag->id}}" name="tags[]" value="{{ $tag->id }}" type="checkbox" class="border-gray-300 rounded px-4 py-2 mr-2">
-                                    <span>{{ $tag->name }}</span>
-                                </label>
-                            @endforeach
+                            <div class="tag-box pb-4">
+                                @foreach($tags as $tag)
+                                    <label for="tag_{{$tag->id}}" class="inline-flex items-center">
+                                        <input id="tag_{{$tag->id}}" name="tags[]" value="{{ $tag->id }}" type="checkbox" class="border-gray-300 rounded px-4 py-2 mr-2">
+                                        <span>{{ $tag->name }}</span>
+                                    </label>
+                                @endforeach
+                            </div>
                         @endforeach
                     </div>
                 </div>
             </div>
 
-            <div class="button text-end">
-                <button id="filterButton" type="submit" class="rounded text-decoration-none fw-bold bg-warning text-light border-0 py-2 px-3">
-                    FILTRA I DATI
-                </button>
-                <button id="resetButton" type="button" class="rounded text-decoration-none fw-bold bg-danger text-light border-0 py-2 px-3 ml-2">
-                    RESET
-                </button>
+            <div class="row">
+                <div class="col-6 delete-button text-start">
+                    <button id="deletableButton" type="submit" class="rounded text-decoration-none fw-bold bg-danger text-light border-0 py-2 px-3">
+                        ELIMINA I DATI FILTRATI
+                    </button>
+                </div>
+                <div class="col-6 filter-buttons text-end">
+                    <button id="filterButton" type="submit" class="rounded text-decoration-none fw-bold bg-primary text-light border-0 py-2 px-3">
+                        FILTRA I DATI
+                    </button>
+                    <button id="resetButton" type="button" class="rounded text-decoration-none fw-bold bg-secondary text-light border-0 py-2 px-3 ml-2">
+                        RESET
+                    </button>
+                </div>
             </div>
         </form>
     </div>
-
-
 
     <table id="zanetti-table-download" class="table table-hover w-100 text-sm text-left text-gray-500 dark:text-gray-400">
         <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">

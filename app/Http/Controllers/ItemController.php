@@ -142,13 +142,14 @@ class ItemController extends Controller
         $operators = User::join('role_user', 'users.id', '=', 'role_user.user_id')->join('roles', 'role_user.role_id', '=', 'roles.id')->where('roles.id', 2)->select('users.*')->get();
         $itemsDate = Item::pluck('time_stamp_pulizia');
 
+
         $tags = Tag::where('domain', 'item')->get();
         $groupedTags = [];
-        foreach ($items as $item) {
-            $itemTags = $item->tags;
+        foreach ($items as $el) {
+            $itemTags = $el->tags;
             foreach ($itemTags as $tag) {
                 $type = $tag->type;
-                $groupedTags[$item->id][$type][] = $tag;
+                $groupedTags[$el->id][$type][] = $tag;
             }
         }
 
@@ -157,6 +158,7 @@ class ItemController extends Controller
             $tags = Tag::where('domain', 'item')->where('type', $type)->get();
             $groupedTagsType[$type] = $tags;
         }
+        
 
         return view('pages.Items.edit', compact('item', 'items', 'clients', 'operators', 'streets', 'comuni', 'tags', 'itemsDate', 'tagTypes', 'groupedTags', 'groupedTagsType'));
     }
@@ -166,7 +168,7 @@ class ItemController extends Controller
         //$this->authorize('update', $item);
         $validated = $request->validated();
         
-        $street = Street::find($validated['street_id']);
+        $street = Street::find($validated['street']);
         if($street) {
             $item->street()->associate($street)->save();
         }
@@ -177,7 +179,7 @@ class ItemController extends Controller
             $item->tags()->sync($validated['tagsIds']);
         }
 
-        return redirect(route('pages.Items.index'));
+        return to_route('items.index');
     }
 
     public function destroy(Item $item) : RedirectResponse

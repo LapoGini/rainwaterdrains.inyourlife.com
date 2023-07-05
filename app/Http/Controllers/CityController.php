@@ -42,7 +42,7 @@ class CityController extends Controller
             $city->user()->associate($user)->save();
         }
 
-        return to_route('Cities.index');
+        return to_route('cities.index');
     }
 
     public function edit(City $city)
@@ -66,13 +66,13 @@ class CityController extends Controller
         }
         $city->update($validated);
 
-        return to_route('Cities.index');
+        return to_route('cities.index');
     }
 
     public function destroy(City $city) : RedirectResponse
     {
         //$this->authorize('delete', $city);
         $city->delete();
-        return to_route('Cities.index');
+        return to_route('cities.index');
     }
 }
