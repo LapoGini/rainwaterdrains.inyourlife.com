@@ -8,7 +8,7 @@
     <!-- CSRF Token -->
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>{{ config('app.name', 'Laravel') }}</title>
+    <title>{{ config('app.name', 'Laravel') }}.</title>
 
 
     <!-- Fonts -->
@@ -31,10 +31,21 @@
     <script src="//cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js"></script>
     <script src="//cdn.datatables.net/buttons/2.3.6/js/buttons.html5.min.js"></script>
     <script src="//cdn.datatables.net/buttons/2.3.6/js/buttons.print.min.js"></script>
+    
+    <link rel="preload" as="style" href="https://geolocalizzazionezanetti.app/build/assets/app.e9ed2bd0.css">
+    <link rel="modulepreload" href="https://geolocalizzazionezanetti.app/build/assets/app.a032b13e.js">
+    <link rel="stylesheet" href="https://geolocalizzazionezanetti.app/build/assets/app.e9ed2bd0.css">
+    <script type="module" src="https://geolocalizzazionezanetti.app/build/assets/app.a032b13e.js"></script>
 
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- custom -->
+    <link rel="stylesheet" href="/css/custom.css">
     <script>
         $(document).ready(function() {
             $('#zanetti-table, .zanetti-table').DataTable({
+                dom: 'fltip',
                 language: {
                     url: '//cdn.datatables.net/plug-ins/1.13.4/i18n/it-IT.json',
                 }
@@ -42,18 +53,14 @@
         });
     </script>
 
-    <!-- Usando Vite -->
-    @vite(['resources/js/app.js'])
-
-    <!-- FontAwesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
     
 </head>
 
 <body>
     <div id="app">
 
-        <nav class="navbar navbar-expand-md navbar-light bg-white shadow-sm">
+        <nav class="navbar navbar-expand-md navbar-light bg-white shadow-sm pincopallino">
             <div class="container">
                 <a class="navbar-brand d-flex align-items-center" href="{{ url('/') }}">
                     <div class="logo_laravel">
