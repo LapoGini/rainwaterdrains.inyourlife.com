@@ -293,6 +293,8 @@
                 },
                 success: function(response) {
                     console.log(response);
+                    // Avvia il download del file ZIP
+                    //window.location.href = response;
                 },
                 error: function(xhr, status, error) {
                     console.error(error);
