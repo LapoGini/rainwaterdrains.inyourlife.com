@@ -77,20 +77,20 @@
                 <!-- Left Side Of Navbar -->
                 
                 <ul class="navbar-nav me-auto">
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ route('users.index') }}">{{ __('Utenti') }}</a>
+                    <li class="nav-item px-3">
+                        <a class="nav-link" href="{{ route('items.index') }}"><i class="fas fa-grip-vertical"></i> {{ __('Caditoie') }}</a>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ route('streets.index') }}">{{ __('Strade') }}</a>
+                    <li class="nav-item px-3">
+                        <a class="nav-link" href="{{ route('users.index') }}"><i class="fas fa-users"></i> {{ __('Utenti/Clienti') }}</a>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ route('cities.index') }}">{{ __('Comuni') }}</a>
+                    <li class="nav-item px-3">
+                        <a class="nav-link" href="{{ route('streets.index') }}"><i class="fas fa-road"></i> {{ __('Strade') }}</a>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ route('tags.index', 'item') }}">{{ __('Tags') }}</a>
+                    <li class="nav-item px-3">
+                        <a class="nav-link" href="{{ route('cities.index') }}"><i class="fas fa-city"></i> {{ __('Comuni') }}</a>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ route('items.index') }}">{{ __('Caditoie') }}</a>
+                    <li class="nav-item px-3">
+                        <a class="nav-link" href="{{ route('tags.index', 'item') }}"><i class="fas fa-tags"></i> {{ __('Tags') }}</a>
                     </li>
                 </ul>
 
@@ -104,7 +104,7 @@
                     @else
                     <li class="nav-item dropdown">
                         <a id="navbarDropdown" class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" v-pre>
-                            {{ Auth::user()->name }}
+                            <i class="fas fa-users-cog"></i> {{ Auth::user()->name }}
                         </a>
 
                         <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdown">
