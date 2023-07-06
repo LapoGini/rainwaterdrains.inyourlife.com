@@ -41,7 +41,7 @@ class ItemController extends Controller
             $groupedTagsType[$type] = $tags;
         }
 
-        //dd($groupedTags);
+        //dd($items);
 
         return $dataTable->render('pages.Items.index', compact('items', 'clients', 'operators', 'streets', 'comuni', 'tags', 'itemsDate', 'tagTypes', 'groupedTags', 'groupedTagsType'));
         //return $dataTable->render('pages.items.index');
@@ -108,6 +108,9 @@ class ItemController extends Controller
         foreach ($items as $item) {
             $itemTags = $item->tags;
 
+            if($request->has('itemCancellabile')) {
+                $this->updateCancellabile($item->id);
+            }
             foreach ($itemTags as $tag) {
                 $type = $tag->type;
                 $groupedTags[$item->id][$type][] = $tag;
@@ -180,6 +183,19 @@ class ItemController extends Controller
         }
 
         return to_route('items.index');
+    }
+
+    private function updateCancellabile($id)
+    {
+        
+        $item = Item::find($id);
+        
+        if (empty($item->cancellabile)) {
+            $item->cancellabile = Carbon::now()->setTimezone('Europe/Rome');
+            return $item->save();
+        }
+
+        return false;
     }
 
     public function destroy(Item $item) : RedirectResponse

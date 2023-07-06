@@ -94,8 +94,9 @@
             <div class="row">
                 <div class="col-6 delete-button text-start">
                     <button id="deletableButton" type="submit" class="rounded text-decoration-none fw-bold bg-danger text-light border-0 py-2 px-3">
-                        ELIMINA I DATI FILTRATI
+                        ELIMINA DATI FILTRATI DA TELEFONO
                     </button>
+                    <p id="confirm-delete"></p>
                 </div>
                 <div class="col-6 filter-buttons text-end">
                     <button id="filterButton" type="submit" class="rounded text-decoration-none fw-bold bg-primary text-light border-0 py-2 px-3">
@@ -134,45 +135,45 @@
         </thead>
         <tbody>
             @foreach($items as $key=>$item)
-            <tr className="border-b dark:bg-gray-800 dark:border-gray-700">
-                <th scope="row" className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
-                    {{$item->id}}
-                </th>
-                <td className="px-6 py-4 comune-filtro">
-                    {{$item->street->name}}, {{$item->street->city->name}}
-                </td>
-                <td className="px-6 py-4">
-                    {{round($item->height)}}L x {{round($item->width)}}S x {{round($item->depth)}}P
-                </td>
-                <td class="px-6">
-                    @if (isset($groupedTags[$item->id]))
-                        @foreach ($groupedTags[$item->id] as $type => $tags)
-                            <p>
-                                <small class="font-bold mr-1">{{ $type }}:</small>
-                                @foreach ($tags as $tag)
-                                    <span class="bg-gray-100 text-gray-800 text-xs font-medium mr-2 px-2.5 py-0.5 rounded dark:bg-gray-700 dark:text-gray-300">{{ $tag->name }}</span>
-                                @endforeach
-                            </p>
-                        @endforeach
-                    @endif
-                </td>
-                <td className="px-6 py-4">
-                    {{$item->user->name}}
-                </td>
-                <td className="px-6 py-4">
-                    <div className="flex-none">
-                        <a class="px-3 py-2 rounded me-3 bg-black text-white" href="{{ route('items.edit', $item) }}"><i class="fas fa-pen-to-square"></i></a>
-                        <a class="px-3 py-2 rounded bg-danger text-white" href="{{ route('items.destroy', $item) }}" onclick="event.preventDefault(); if (confirm('Sei sicuro di voler eliminare questo comune?')) { document.getElementById('delete-form').submit(); }">
-                            <i class="fa-solid fa-trash"></i>
-                        </a>
+                <tr className="border-b dark:bg-gray-800 dark:border-gray-700">
+                    <th scope="row" className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
+                        {{$item->id}}
+                    </th>
+                    <td className="px-6 py-4 comune-filtro">
+                        {{$item->street->name}}, {{$item->street->city->name}}
+                    </td>
+                    <td className="px-6 py-4">
+                        {{round($item->height)}}L x {{round($item->width)}}S x {{round($item->depth)}}P
+                    </td>
+                    <td class="px-6">
+                        @if (isset($groupedTags[$item->id]))
+                            @foreach ($groupedTags[$item->id] as $type => $tags)
+                                <p>
+                                    <small class="font-bold mr-1">{{ $type }}:</small>
+                                    @foreach ($tags as $tag)
+                                        <span class="bg-gray-100 text-gray-800 text-xs font-medium mr-2 px-2.5 py-0.5 rounded dark:bg-gray-700 dark:text-gray-300">{{ $tag->name }}</span>
+                                    @endforeach
+                                </p>
+                            @endforeach
+                        @endif
+                    </td>
+                    <td className="px-6 py-4">
+                        {{$item->user->name}}
+                    </td>
+                    <td className="px-6 py-4">
+                        <div className="flex-none">
+                            <a class="px-3 py-2 rounded me-3 bg-black text-white" href="{{ route('items.edit', $item) }}"><i class="fas fa-pen-to-square"></i></a>
+                            <a class="px-3 py-2 rounded bg-danger text-white" href="{{ route('items.destroy', $item) }}" onclick="event.preventDefault(); if (confirm('Sei sicuro di voler eliminare questo comune?')) { document.getElementById('delete-form').submit(); }">
+                                <i class="fa-solid fa-trash"></i>
+                            </a>
 
-                        <form id="delete-form" action="{{ route('items.destroy', $item) }}" method="POST" style="display: none;">
-                            @csrf
-                            @method('DELETE')
-                        </form>
-                    </div>
-                </td>
-            </tr>
+                            <form id="delete-form" action="{{ route('items.destroy', $item) }}" method="POST" style="display: none;">
+                                @csrf
+                                @method('DELETE')
+                            </form>
+                        </div>
+                    </td>
+                </tr>
             @endforeach
 
         </tbody>
@@ -182,9 +183,11 @@
 
 <script>
     $(document).ready(function() {
+        $('#deletableButton').hide();
+        hideDownloadButtons();
         $('#zanetti-table-download').DataTable({
             initComplete: function(setting, json) {
-                hideDownloadButtons()
+                hideDownloadButtons();
             },
             dom: 'Bfltip',
             language: {
@@ -203,17 +206,19 @@
         });
         // Prendere i filtri all'invio del form
         $('form').submit(function(event) {
-            event.preventDefault(); // Previeni l'invio del modulo predefinito
+            event.preventDefault();
             applyFilters();
         });
-        // Nascondere bottoni download
-        $('#client').change(function() {
-            if ($(this).val() === '') {
-                hideDownloadButtons();
-            } else {
-                showDownloadButtons();
-            }
+        // button per resettare i filtri
+        $('#resetButton').on('click', function() {
+            resetFilters();
         });
+        // button per eliminare caditoie cancellabili
+        $('#deletableButton').on('click', function() {
+            deleteSewers();
+        })
+
+
         // funzione per nascondere i buttons
         function hideDownloadButtons() {
             $('.buttons-csv, .buttons-excel').hide();
@@ -222,7 +227,6 @@
         function showDownloadButtons() {
             $('.buttons-csv, .buttons-excel').show();
         }
-
         // funzione per i filtri
         function applyFilters() {
             var clientId = $('#client').val();
@@ -235,7 +239,6 @@
             $('input[name="tags[]"]:checked').each(function() {
                 selectedTags.push($(this).val());
             });
-
             // chiamata AJAX per avere i dati filtrati
             $.ajax({
                 url: "{{ route('items.filterData') }}",
@@ -248,10 +251,15 @@
                     toDateId: toDateId,
                     operatorId: operatorId,
                     tags: selectedTags,
-
                 },
                 success: function(response) {
                     $('#zanetti-table-download tbody').html(response);
+                    $('#deletableButton').show();
+                    if ($('#client').val() === '') {
+                        hideDownloadButtons();
+                    } else {
+                        showDownloadButtons();
+                    }
                 },
                 error: function(xhr, status, error) {
                     console.error(error);
@@ -262,14 +270,51 @@
         function resetFilters() {
             $('#client, #comune, #street, #operator,#fromDate, #toDate').val('');
             $('input[name="tags[]"]').prop('checked', false);
+            $('#deletableButton').hide();
             hideDownloadButtons();
             applyFilters();
         }
-        // button per resettare i filtri
-        $('#resetButton').on('click', function() {
-            resetFilters();
-        });
+        // Funzione per eliminazione
+        function deleteSewers() {
+            var clientId = $('#client').val();
+            var comuneId = $('#comune').val();
+            var streetId = $('#street').val();
+            var fromDateId = $('#fromDate').val();
+            var toDateId = $('#toDate').val();
+            var operatorId = $('#operator').val();
+            var selectedTags = [];
+            $('input[name="tags[]"]:checked').each(function() {
+                selectedTags.push($(this).val());
+            });
 
+            let text = "Sei sicuro di voler eliminare le caditoie?\nScegli Ok o Annulla.";
+            if (confirm(text)) {
+                $.ajax({
+                url: "{{ route('items.filterData') }}",
+                method: "GET",
+                data: { 
+                    clientId: clientId,
+                    comuneId: comuneId,
+                    streetId: streetId,
+                    fromDateId: fromDateId,
+                    toDateId: toDateId,
+                    operatorId: operatorId,
+                    tags: selectedTags,
+                    itemCancellabile: true,
+                  },
+                    success: function(response) {
+                        text = "Le Caditoie sono state eliminate con successo!";
+                        document.getElementById("confirm-delete").innerHTML = text;
+                    },
+                    error: function(xhr, status, error) {
+                        console.error(error);
+                    }
+                })
+            } else {
+                text = "Le Caditoie non sono state eliminate!";
+            }
+            document.getElementById("confirm-delete").innerHTML = text;
+        }
     });
 </script>
 
