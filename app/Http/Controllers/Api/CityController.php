@@ -15,11 +15,17 @@ class CityController extends Controller
     {
         //$cities = City::with('user')->orderBy('id', 'DESC')->get();
 
-        $cities= City::orderBy('id', 'DESC')->select('id as comune_id', 'name as comune_nome', 'district as provincia_id', 'pics as foto', 'user_id as CLIENTE')->get(); //, status as stato
-        foreach ($cities as $comune){
-            
-            $comune->vie = (new StreetController)->getByCityId($comune->comune_id)->original['data'];
-        }        
+        $cities= City::orderBy('id', 'DESC')->select('id as comune_id', 'name as comune_nome', 'district as provincia_id', 'pics as foto', 'user_id as CLIENTE', 'status as stato')->get();       
         return Functions::setResponse($cities, 'Città non trovate');
+    }
+
+    public function getViePerOgniComune() 
+    {
+        $vie=[];
+        $cities= City::orderBy('id', 'DESC')->get();
+        foreach ($cities as $comune){
+            $vie[$comune->id]= (new StreetController)->getByCityId($comune->id)->original['data'];
+        }        
+        return Functions::setResponse($vie, 'Vie non trovate');
     }
 }

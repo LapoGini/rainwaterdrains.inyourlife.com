@@ -24,4 +24,25 @@ class TagController extends Controller
 
         return Functions::setResponse($tags, 'Tags non trovati');
     }
+
+    public function getRecapiti() 
+    {
+        $tags = Tag::where('type', 'Recapito' )->select('id as recapito_id','name as recapito_nome')->get();
+
+        return Functions::setResponse($tags, 'Nessun Recapito Trovato');
+    }
+
+    public function getStati() 
+    {
+        $tags = Tag::where('type', 'Stato' )->select('id as stato_id','name as stato_nome')->get();
+
+        return Functions::setResponse($tags, 'Nessun Stato Trovato');
+    }
+
+    public function getTipiPozzetto() 
+    {
+        $tags = Tag::where('type', 'Tipo Pozzetto' )->select('id as tipopozzetto_id','name as pozzetto_nome')->get();
+
+        return Functions::setResponse($tags, 'Nessun Tipo Pozzetto Trovato');
+    }
 }

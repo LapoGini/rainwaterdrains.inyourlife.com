@@ -26,7 +26,16 @@ class AuthController extends Controller
             
             $user['token']=$user->api_token;
 
-            return response()->json(['result' => true, 'user' => $user, 'comuni' => (new CityController)->getAll()->original['data'], 'vie' => (new StreetController)->getAll()->original['data'],'clienti' => (new UserController)->getByRole('cliente')->original['data'],'token' => $user->api_token], 200);;
+            return response()->json([
+                'result' => true, 
+                'user' => $user, 
+                'comuni' => (new CityController)->getAll()->original['data'], 
+                'vie' => (new CityController)->getViePerOgniComune()->original['data'],
+                'clienti' => (new UserController)->getByRole('cliente')->original['data'], 
+                'recapiti' => (new TagController)->getRecapiti()->original['data'], 
+                'stati' => (new TagController)->getStati()->original['data'], 
+                'pozzetti' => (new TagController)->getTipiPozzetto()->original['data']
+            ], 200);
         }
 
         return response()->json(['result' => false, 'error' => 'User e/o password errate!'], 401);
