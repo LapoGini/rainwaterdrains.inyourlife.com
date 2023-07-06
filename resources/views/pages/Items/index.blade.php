@@ -110,6 +110,8 @@
         </form>
     </div>
 
+    <a id="downloadZip" class="btn btn-primary">Scarica file ZIP</a>
+
     <table id="zanetti-table-download" class="table table-hover w-100 text-sm text-left text-gray-500 dark:text-gray-400">
         <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
             <tr>
@@ -166,7 +168,6 @@
                             <a class="px-3 py-2 rounded bg-danger text-white" href="{{ route('items.destroy', $item) }}" onclick="event.preventDefault(); if (confirm('Sei sicuro di voler eliminare questo comune?')) { document.getElementById('delete-form').submit(); }">
                                 <i class="fa-solid fa-trash"></i>
                             </a>
-
                             <form id="delete-form" action="{{ route('items.destroy', $item) }}" method="POST" style="display: none;">
                                 @csrf
                                 @method('DELETE')
@@ -175,10 +176,8 @@
                     </td>
                 </tr>
             @endforeach
-
         </tbody>
     </table>
-    
 </div>
 
 <script>
@@ -217,6 +216,9 @@
         // button per eliminare caditoie cancellabili
         $('#deletableButton').on('click', function() {
             deleteSewers();
+        })
+        $('#downloadZip').on('click', function() {
+            downloadZip();
         })
         // dati select on change di clienti
         $('#client').change(function() {
@@ -265,10 +267,41 @@
             $('.buttons-csv, .buttons-excel').show();
         }
         // funzione per i filtri
+        function downloadZip() {
+            var clientId = $('#client').val();
+            var comuneId = $('#comune').val();
+            var streetId = $('#street').val();
+            var fromDateId = $('#fromDate').val();
+            var toDateId = $('#toDate').val();
+            var operatorId = $('#operator').val();
+            var selectedTags = [];
+            $('input[name="tags[]"]:checked').each(function() {
+                selectedTags.push($(this).val());
+            });
+            // chiamata AJAX per avere i dati filtrati
+            $.ajax({
+                url: "{{ route('items.downloadZip') }}",
+                method: "GET",
+                data: {
+                    clientId: clientId,
+                    comuneId: comuneId,
+                    streetId: streetId,
+                    fromDateId: fromDateId,
+                    toDateId: toDateId,
+                    operatorId: operatorId,
+                    tags: selectedTags,
+                },
+                success: function(response) {
+                    console.log(response);
+                },
+                error: function(xhr, status, error) {
+                    console.error(error);
+                }
+            });
+        }
         function applyFilters() {
             var clientId = $('#client').val();
             var comuneId = $('#comune').val();
-            console.log(comuneId);
             var streetId = $('#street').val();
             var fromDateId = $('#fromDate').val();
             var toDateId = $('#toDate').val();

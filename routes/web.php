@@ -37,6 +37,7 @@ Route::resource('items', ItemController::class)->only(['index', 'create', 'edit'
 Route::get('items/filterData', [ItemController::class, 'filterData'])->name('items.filterData')->middleware(['auth', 'verified', 'role:admin']);
 Route::get('items/city_id/{client}', [ItemController::class, 'getHtmlCityByClient'])->name('items.city_id')->middleware(['auth', 'verified', 'role:admin']);
 Route::get('items/street/{city_id}', [ItemController::class, 'getHtmlStreetByCity'])->name('items.street')->middleware(['auth', 'verified', 'role:admin']);
+Route::get('/download-zip', [ItemController::class, 'createZipFileFromImg_Items'])->name('items.downloadZip')->middleware(['auth', 'verified', 'role:admin']);
 
 
 Route::middleware('auth')->group(function () {

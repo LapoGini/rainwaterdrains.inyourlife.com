@@ -12,6 +12,8 @@ use App\Models\User;
 use App\Models\Tag;
 use App\DataTables\ItemsDataTable;
 use Carbon\Carbon;
+use ZipArchive;
+use Illuminate\Support\Facades\File;
 
 class ItemController extends Controller
 {
@@ -20,8 +22,6 @@ class ItemController extends Controller
 
         $selectedClient = request()->query('client');
         $selectedComune = request()->query('comune');
-
-        //dd(request());
         
         $items = Item::with('street', 'street.city', 'tags', 'user')->orderBy('id', 'DESC')->paginate(50);
         $comuni = City::join('users', 'cities.user_id', '=', 'users.id')->where('users.id',  $selectedClient)->get();
@@ -53,22 +53,17 @@ class ItemController extends Controller
     }
 
     public function getHtmlCityByClient($id) {
-
         $comuni = City::whereHas('user', function ($query) use ($id) {
             $query->where('users.id', $id);
         })->get();
-
         echo '<option value="">Tutti</option>';
         foreach($comuni as $comune) {
             echo '<option value="'.$comune->id.'">'.$comune->name.'</option>';
         };
-        
     }
 
     public function getHtmlStreetByCity($id) {
         $streets = Street::where('city_id', $id)->get();
-
-
         echo '<option value="">Tutti</option>';
         foreach($streets as $street) {
             echo '<option value="'.$street->id.'">'.$street->name.'</option>';
@@ -83,6 +78,29 @@ class ItemController extends Controller
 
     public function filterData(FilteredDataRequest $request)
     {
+        $items = $this->getItems($request);
+        
+        $groupedTags = [];
+
+        foreach ($items as $item) {
+            $itemTags = $item->tags;
+
+            if($request->has('itemCancellabile')) {
+                $this->updateCancellabile($item->id);
+            }
+            foreach ($itemTags as $tag) {
+                $type = $tag->type;
+                $groupedTags[$item->id][$type][] = $tag;
+            }
+        }
+
+        //$zipFilePath = $this->createZipFileFromImg_Items($items);
+
+        return view('pages.Items.filtered_data', compact('items', 'groupedTags'));
+    }
+
+    private function getItems(FilteredDataRequest $request) {
+
         $clientId = $request->input('clientId');
         $comuneId = $request->input('comuneId');
         $streetId = $request->input('streetId');
@@ -130,22 +148,37 @@ class ItemController extends Controller
         }
 
         $items = $query->orderBy('id', 'DESC')->get();
+
+        return $items;
+    }
+
+    public function createZipFileFromImg_Items(FilteredDataRequest $request) {
+
+        $items = $this->getItems($request);
+
+        $zip = new ZipArchive;
         
-        $groupedTags = [];
-
-        foreach ($items as $item) {
-            $itemTags = $item->tags;
-
-            if($request->has('itemCancellabile')) {
-                $this->updateCancellabile($item->id);
+        $zipFilePath = public_path('storage');
+        
+        if ($zip->open($zipFilePath, ZipArchive::CREATE) === true) {
+            
+            foreach ($items as $item) {
+                // Recupera la cartella corrispondente al giorno dell'immagine
+                $dateTime = Carbon::parse($item->time_stamp_pulizie);
+                $folderPath = public_path('public_html/' . $dateTime->format('Y/m/d'));
+                
+                // Recupera l'immagine
+                $imagePath = $folderPath . '/' . $item->id_da_app;
+                
+                if (File::exists($imagePath)) {
+                    $relativeNameInZipFile = $item->id_da_app;
+                    $zip->addFile($imagePath, $relativeNameInZipFile);
+                }
             }
-            foreach ($itemTags as $tag) {
-                $type = $tag->type;
-                $groupedTags[$item->id][$type][] = $tag;
-            }
+            $zip->close();
+            return $zipFilePath;
         }
-
-        return view('pages.Items.filtered_data', compact('items', 'groupedTags'));
+        return null;
     }
 
 
