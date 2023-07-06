@@ -17,9 +17,15 @@ class ItemController extends Controller
 {
     public function index(ItemsDataTable $dataTable) 
     {
+
+        $selectedClient = request()->query('client');
+        $selectedComune = request()->query('comune');
+
+        //dd(request());
+        
         $items = Item::with('street', 'street.city', 'tags', 'user')->orderBy('id', 'DESC')->paginate(50);
-        $streets = Street::with('city')->get();
-        $comuni = City::all();
+        $comuni = City::join('users', 'cities.user_id', '=', 'users.id')->where('users.id',  $selectedClient)->get();
+        $streets = Street::join('cities', 'cities.id', '=', 'streets.city_id')->join('users', 'cities.user_id', '=', 'users.id')->where('users.id', $selectedComune)->select('streets.*')->get();
         $clients = User::join('role_user', 'users.id', '=', 'role_user.user_id')->join('roles', 'role_user.role_id', '=', 'roles.id')->where('roles.id', 3)->select('users.*')->get();
         $tagTypes = Tag::where('domain', 'item')->distinct('type')->pluck('type');
         $operators = User::join('role_user', 'users.id', '=', 'role_user.user_id')->join('roles', 'role_user.role_id', '=', 'roles.id')->where('roles.id', 2)->select('users.*')->get();
@@ -41,10 +47,32 @@ class ItemController extends Controller
             $groupedTagsType[$type] = $tags;
         }
 
-        //dd($items);
 
         return $dataTable->render('pages.Items.index', compact('items', 'clients', 'operators', 'streets', 'comuni', 'tags', 'itemsDate', 'tagTypes', 'groupedTags', 'groupedTagsType'));
         //return $dataTable->render('pages.items.index');
+    }
+
+    public function getHtmlCityByClient($id) {
+
+        $comuni = City::whereHas('user', function ($query) use ($id) {
+            $query->where('users.id', $id);
+        })->get();
+
+        echo '<option value="">Tutti</option>';
+        foreach($comuni as $comune) {
+            echo '<option value="'.$comune->id.'">'.$comune->name.'</option>';
+        };
+        
+    }
+
+    public function getHtmlStreetByCity($id) {
+        $streets = Street::where('city_id', $id)->get();
+
+
+        echo '<option value="">Tutti</option>';
+        foreach($streets as $street) {
+            echo '<option value="'.$street->id.'">'.$street->name.'</option>';
+        };
     }
 
     // devo recuperare la colonna id_da_app che si trova in items

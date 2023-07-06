@@ -16,7 +16,7 @@
                         <label for="client" class="fw-light fst-italic d-block text-gray-700 text-sm font-bold mb-2">
                             Seleziona un cliente:
                         </label>
-                        <select id="client" name="client" class="w-100 border border-gray-300 rounded px-4 py-2">
+                        <select id="client" name="client" class="select2 w-100 border border-gray-300 rounded px-4 py-2">
                             <option value="">Tutti</option>
                             @foreach($clients as $client)
                                 <option value="{{ $client->id }}">{{ $client->name }}</option>
@@ -27,7 +27,7 @@
                         <label for="comune" class="fw-light fst-italic d-block text-gray-700 text-sm font-bold mb-2">
                             Seleziona un comune:
                         </label>
-                        <select id="comune" name="comune" class="w-100 border border-gray-300 rounded px-4 py-2">
+                        <select id="comune" name="comune" class="select2 w-100 border border-gray-300 rounded px-4 py-2">
                             <option value="">Tutti</option>
                             @foreach($comuni as $comune)
                                 <option value="{{ $comune->id }}">{{ $comune->name }}</option>
@@ -38,7 +38,7 @@
                         <label for="street" class="fw-light fst-italic d-block text-gray-700 text-sm font-bold mb-2">
                             Seleziona una strada:
                         </label>
-                        <select id="street" name="street" class="w-100 border border-gray-300 rounded px-4 py-2">
+                        <select id="street" name="street" class="select2 w-100 border border-gray-300 rounded px-4 py-2">
                             <option value="">Tutte</option>
                             @foreach($streets as $street)
                                 <option value="{{ $street->id }}">{{ $street->name }}</option>
@@ -64,7 +64,7 @@
                         <label for="operator" class="fw-light fst-italic d-block text-gray-700 text-sm font-bold mb-2">
                             Seleziona un operatore:
                         </label>
-                        <select id="operator" name="operator" class="w-100 border border-gray-300 rounded px-4 py-2">
+                        <select id="operator" name="operator" class="select2 w-100 border border-gray-300 rounded px-4 py-2">
                             <option value="">Tutti</option>
                             @foreach($operators as $operator)
                                 <option value="{{ $operator->id }}">{{ $operator->name }}</option>
@@ -183,6 +183,7 @@
 
 <script>
     $(document).ready(function() {
+        $('.select2').select2();
         $('#deletableButton').hide();
         hideDownloadButtons();
         $('#zanetti-table-download').DataTable({
@@ -217,6 +218,42 @@
         $('#deletableButton').on('click', function() {
             deleteSewers();
         })
+        // dati select on change di clienti
+        $('#client').change(function() {
+            var selectedClient = $(this).val();
+            $('#comune').html('');
+            $('#street').html('');
+            if(selectedClient !== '') {
+                $.ajax({
+                    url: "items/city_id/" + selectedClient, 
+                    type: 'GET',
+                    success: function(response) {
+                        $('#comune').html(response);
+                    },
+                    error: function(xhr, status, error) {
+                        console.log('error');
+                    }
+                });
+            }
+        });
+        // dati select on change di comuni
+        $('#comune').change(function() {
+            var selectedComune = $(this).val();
+            if ($(this).val() === '') {
+                $('#street').html('');
+            } else {
+                $.ajax({
+                    url: "items/street/" + selectedComune, 
+                    type: 'GET',
+                    success: function(response) {
+                        $('#street').html(response);
+                    },
+                    error: function(xhr, status, error) {
+                        console.log('error');
+                    }
+                });
+            }
+        });
 
 
         // funzione per nascondere i buttons
@@ -231,6 +268,7 @@
         function applyFilters() {
             var clientId = $('#client').val();
             var comuneId = $('#comune').val();
+            console.log(comuneId);
             var streetId = $('#street').val();
             var fromDateId = $('#fromDate').val();
             var toDateId = $('#toDate').val();

@@ -35,6 +35,8 @@ Route::resource('cities', CityController::class)->only(['index', 'create', 'edit
 Route::resource('users', UserController::class)->only(['index', 'create', 'edit', 'store', 'update', 'destroy'])->middleware(['auth', 'verified', 'role:admin']);
 Route::resource('items', ItemController::class)->only(['index', 'create', 'edit', 'update', 'destroy'])->middleware(['auth', 'verified', 'role:admin']);
 Route::get('items/filterData', [ItemController::class, 'filterData'])->name('items.filterData')->middleware(['auth', 'verified', 'role:admin']);
+Route::get('items/city_id/{client}', [ItemController::class, 'getHtmlCityByClient'])->name('items.city_id')->middleware(['auth', 'verified', 'role:admin']);
+Route::get('items/street/{city_id}', [ItemController::class, 'getHtmlStreetByCity'])->name('items.street')->middleware(['auth', 'verified', 'role:admin']);
 
 
 Route::middleware('auth')->group(function () {
