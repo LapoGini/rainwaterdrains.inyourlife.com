@@ -14,6 +14,7 @@ use App\DataTables\ItemsDataTable;
 use Carbon\Carbon;
 use ZipArchive;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Storage;
 
 class ItemController extends Controller
 {
@@ -157,26 +158,30 @@ class ItemController extends Controller
         $items = $this->getItems($request);
 
         $zip = new ZipArchive;
+
+        $zipFileName = date('Ymdhis') . '.zip';
         
-        $zipFilePath = public_path('storage');
-        
+        $zipFilePath = Storage::disk('img_items')->path($zipFileName);
+
         if ($zip->open($zipFilePath, ZipArchive::CREATE) === true) {
             
             foreach ($items as $item) {
                 // Recupera la cartella corrispondente al giorno dell'immagine
                 $dateTime = Carbon::parse($item->time_stamp_pulizie);
-                $folderPath = public_path('public_html/' . $dateTime->format('Y/m/d'));
-                
+
+                $folderPath = Storage::disk('img_items')->path('');
+
                 // Recupera l'immagine
-                $imagePath = $folderPath . '/' . $item->id_da_app;
+                $imagePath = $folderPath . $item->id_da_app . '/';
                 
-                if (File::exists($imagePath)) {
-                    $relativeNameInZipFile = $item->id_da_app;
+                if (!Storage::disk('img_items')->exists($imagePath)) {
+                    $relativeNameInZipFile = $item->id_da_app . '.zip';
+
                     $zip->addFile($imagePath, $relativeNameInZipFile);
                 }
             }
             $zip->close();
-            return $zipFilePath;
+            return $imagePath;
         }
         return null;
     }
