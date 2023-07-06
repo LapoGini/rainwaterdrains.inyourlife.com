@@ -8,7 +8,6 @@ use App\Models\Street;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
 
 use App\Utils\Functions;
@@ -172,10 +171,7 @@ class ItemController extends Controller
         $image = str_replace(' ', '+', $image);
 
         $imageName = 'prova.png';
-        Storage::disk('img_items')->put($imageName, base64_decode($image));
-        //File::put(__DIR__.'/public_html/img/' . $imageName, base64_decode($image));
-        
-
+        Storage::disk('img_items')->put($imageName, base64_decode($image));      
 
         return 'sì';
     }

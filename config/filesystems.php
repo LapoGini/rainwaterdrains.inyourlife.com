@@ -44,6 +44,12 @@ return [
             'throw' => false,
         ],
 
+        'img_items' => [
+            'driver' => 'local',
+            'root' => env('IMG_FOLDERS'),
+            'url' => env('IMG_FOLDERS')
+        ],
+
         's3' => [
             'driver' => 's3',
             'key' => env('AWS_ACCESS_KEY_ID'),

@@ -42,5 +42,10 @@ Route::group(['middleware' => ['auth:api']], function () {
     Route::get('/streets', [StreetController::class, 'getAll'])->name('api.streets.all');
 
     Route::get('/items', [ItemController::class, 'getAll'])->name('api.items.all');
-    Route::post('/item', [ItemController::class, 'set'])->name('api.item.set');
+    Route::post('/item', [ItemController::class, 'set'])->name('api.items.set');
+
+    //aggiunte per Zanetti
+    Route::get('/delete_caditoie/{id_sd}', [ItemController::class, 'getCancellabili'])->name('api.items.getCancellabili');
+    Route::get('/delete_caditoie_id/{id}', [ItemController::class, 'setDeleted'])->name('api.items.setDeleted');
+    Route::post('/setCaditoia', [ItemController::class, 'setCaditoia'])->name('api.items.setCaditoia');
 });
