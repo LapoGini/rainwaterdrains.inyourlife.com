@@ -343,7 +343,11 @@ class ItemController extends Controller
         $items = Item::with('street', 'street.city', 'tags', 'user')->whereRaw('street_id='.$codicevia.' AND DATE_FORMAT(time_stamp_pulizia, "%Y-%m-%d")>="'.Carbon::now()->subDays($giorniindietro).'"')->get();
 
         $caditoie=[];
+<<<<<<< HEAD
         $row=0;
+=======
+        $row=0; 
+>>>>>>> 3733e0b6b90c12247cd8bac0fd5ba1691da5ce60
         foreach ($items as $i){
             $itemTags = $i->tags;
             foreach ($itemTags as $tag){
@@ -370,5 +374,9 @@ class ItemController extends Controller
         $ret['cadiotie']=$caditoie;
         return response()->json($ret, 200);
         
+<<<<<<< HEAD
+=======
+        
+>>>>>>> 3733e0b6b90c12247cd8bac0fd5ba1691da5ce60
     }
 }

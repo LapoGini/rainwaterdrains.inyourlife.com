@@ -23,8 +23,7 @@ class AuthController extends Controller
             $user = Auth::guard('web')
                         ->user()
                         ->setAuthToken();
-            
-            $user['token']=$user->api_token;
+        
 
             return response()->json([
                 'result' => true, 
