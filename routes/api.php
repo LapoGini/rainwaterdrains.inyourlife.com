@@ -25,7 +25,7 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 });
 
 //Route::post('register',[AuthController::class,'register']);
-Route::post('login',[AuthController::class,'login']);
+Route::get('login',[AuthController::class,'login']);
 
 Route::group(['middleware' => ['auth:api']], function () {
     Route::post('logout', [AuthController::class, 'logout']);
@@ -47,5 +47,8 @@ Route::group(['middleware' => ['auth:api']], function () {
     //aggiunte per Zanetti
     Route::get('/delete_caditoie/{id_sd}', [ItemController::class, 'getCancellabili'])->name('api.items.getCancellabili');
     Route::get('/delete_caditoie_id/{id}', [ItemController::class, 'setDeleted'])->name('api.items.setDeleted');
+    Route::get('/scansioni/', [ItemController::class, 'getCaditoieScansionate'])->name('api.items.getCaditoieScansionate');
+    Route::get('/scansioniPerVia/', [ItemController::class, 'getCaditoieScansionatePerVia'])->name('api.items.getCaditoieScansionatePerVia');
     Route::post('/setCaditoia', [ItemController::class, 'setCaditoia'])->name('api.items.setCaditoia');
+    Route::post('/aggiungiVia', [StreetController::class, 'setVia'])->name('api.streets.setVia');
 });

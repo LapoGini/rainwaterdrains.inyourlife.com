@@ -9,7 +9,21 @@ class Item extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['latitude', 'longitude', 'altitude', 'accuracy','height', 'width', 'depth', 'pic', 'note'];
+    protected $fillable = [
+        'id_sd', 
+        'id_da_app',
+        'time_stamp_pulizia',
+        'civic',
+        'caditoie_equiv',
+        'latitude', 
+        'longitude', 
+        'altitude', 
+        'accuracy',
+        'height', 
+        'width', 
+        'depth', 
+        'pic', 
+        'note'];
 
     public function street() {
         return $this->belongsTo(Street::class);
