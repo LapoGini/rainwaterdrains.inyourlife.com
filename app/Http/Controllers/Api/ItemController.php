@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\City;
 use App\Models\Item;
 use App\Models\Street;
 use Illuminate\Database\Eloquent\Builder;
@@ -17,54 +18,54 @@ use Illuminate\Support\Facades\Auth;
 class ItemController extends Controller
 {
 
-    public function getAll() 
+    public function getAll()
     {
         $items = Item::with('street', 'street.city', 'tags', 'user')->orderBy('id', 'DESC')->get();
-        
+
         return Functions::setResponse($items, 'Operazioni non trovate');
     }
 
-    public function getByCityId(int $city_id) 
+    public function getByCityId(int $city_id)
     {
         $items = Street::with('street', 'street.city', 'tags', 'user')->whereHas('street.city', function (Builder $query) use ($city_id) {
             $query->where('id', '=', $city_id);
         })->get();
-        
+
         return Functions::setResponse($items, 'Strade non trovate');
     }
 
-    public function getByStreetId(int $street_id) 
+    public function getByStreetId(int $street_id)
     {
         $items = Street::with('street', 'street.city', 'tags', 'user')->whereHas('street', function (Builder $query) use ($street_id) {
             $query->where('id', '=', $street_id);
         })->get();
-        
+
         return Functions::setResponse($items, 'Strade non trovate');
     }
 
-    public function getByUserId(int $user_id) 
+    public function getByUserId(int $user_id)
     {
         $items = Street::with('street', 'street.city', 'tags', 'user')->whereHas('user', function (Builder $query) use ($user_id) {
             $query->where('id', '=', $user_id);
         })->get();
-        
+
         return Functions::setResponse($items, 'Strade non trovate');
     }
 
-    public function getByTagId(int $tag_id) 
+    public function getByTagId(int $tag_id)
     {
         $items = Street::with('street', 'street.city', 'tags', 'user')->whereHas('tag', function (Builder $query) use ($tag_id) {
             $query->where('id', '=', $tag_id);
         })->get();
-        
+
         return Functions::setResponse($items, 'Strade non trovate');
     }
 
-    public function set(Request $request) 
+    public function set(Request $request)
     {
         $user = Auth::guard('api')->user();
         $data = $request->all();
-        
+
         $validator = Validator::make($data,[
             'latitude'=> 'required|numeric',
             'longitude'=> 'required|numeric',
@@ -82,10 +83,10 @@ class ItemController extends Controller
         if($validator->fails()){
             return response()->json(['validation_errors' => $validator->messages()],201);
         }
-        
-       
-        $street = Street::find($data['street_id']); 
-        
+
+
+        $street = Street::find($data['street_id']);
+
         if($street) {
             $item = Item::make($data);
             $item->street()->associate($street);
@@ -105,7 +106,7 @@ class ItemController extends Controller
      * @param int $id Item da aggiornare
      * @return boolean true or false
      */
-    public function setDeleted(int $id) 
+    public function setDeleted(int $id)
     {
         $item = Item::find($id);
         $result=false;
@@ -142,7 +143,7 @@ class ItemController extends Controller
      * @param Request la richiesta con tutti i dati inviati da app
      * @return int|false id item inserito sul server oppure false se errore
      */
-    public function setCaditoia(Request $request) 
+    public function setCaditoia(Request $request)
     {
         $user = Auth::guard('api')->user();
         $data = $request->all();
@@ -150,27 +151,128 @@ class ItemController extends Controller
         $date = new \DateTime('now',new \DateTimeZone('Europe/Rome'));
         $cartellaDelGiorno='/'.$date->format('Ymd').'/';
 
-        if(!Storage::disk('img_items')->exists($cartellaDelGiorno)) {
-            $dir=Storage::disk('img_items')->makeDirectory($cartellaDelGiorno, 0775, true);
-            var_dump($dir);
+        $comune=City::find($data['comune_id']);
+        if (empty($data['immagine']) && $comune->pics) {
+            $this->saveImage($data['immagine'],$data['caditoia_id'],$cartellaDelGiorno);
         }
-        
-    
-        $image = $data['photo'];  // your base64 encoded
-        $image = str_replace('data:image/png;base64,', '', $image);
-        $image = str_replace(' ', '+', $image);
 
-        $imageName = 'prova';
-         else {
-            var_dump('niente');
+        if ($data['recapito']=='') {
+            $data['recapito']=1;
         }
-        if(Storage::disk('img_items')->exists($imageName.'.png')) {
-            Storage::disk('img_items')->put($imageName.date('His').'.png', base64_decode($image));
-            echo 'esiste';     
+        if ($data['lunghezza']=='') {
+            $data['lunghezza']=0.5;
+        }
+        if ($data['larghezza']=='') {
+            $data['larghezza']=0.5;
         } else {
-            Storage::disk('img_items')->put($imageName.'.png', base64_decode($image));     
-            echo 'non esiste';     
+            $data['larghezza']/=100;
+
         }
-        return 'sì';
+        if ($data['profondita']=='') {
+            $data['profondita']=0.5;
+        } else {
+            $data['profondita']/=100;
+        }
+
+        if ($data['tipopozzetto']!=4) {  //se griglia
+            $data['lunghezza']=0.5;
+            $data['larghezza']=0.5;
+            $data['profondita']=0.5;
+        }
+
+        if ($data['tipopozzetto']==4) {   //se griglia
+            //facciamo il calcolo
+            if ((int) $data['larghezza']>=25) {
+                $tmp= (double) $data['lunghezza'];
+                $tmp=$tmp*2;
+            } elseif ((int) $data['profondita'] < 30) {
+                $tmp= (double) $data['lunghezza'];
+                $tmp=$tmp/2;
+            } else{
+                $tmp= (double) $data['lunghezza'];
+                $tmp=$tmp*2;
+            }
+            $caditoie_equiv=(string) $tmp;
+
+        } else {
+            $caditoie_equiv="1";
+        }
+
+        /*caditoie_id,
+        stato_id,
+        caditoie_lat,
+        caditoie_lng,
+        caditoie_altitude,
+        codice_via,
+        comune_id,
+        caditoie_ubicazione,
+        tipo_pozzetto_id,
+        recapito,
+        larghezza,
+        lunghezza,
+        profondita,
+        foto_id,
+        caditoie_note,
+        user_id,
+        caditoie_timestamp,
+        stato_custom,
+        pozzetto_custom,
+        caditoie_equiv*/
+
+        /* $_GET['caditoia_id'],
+        $_GET['statocaditoia'],
+        $_GET['lat'],
+        $_GET['lng'],
+        $_GET['altitude'],
+        $_GET['codice_via'],
+        $_GET['comune_id'],
+        $_GET['ubicazione'],
+        $_GET['tipopozzetto'],
+        $_GET['recapito'],
+        $_GET['larghezza'],
+        $_GET['lunghezza'],
+        $_GET['profondita'],
+        $FOTO['foto_id'],
+        $_GET['note'],
+        $user['user_id'],
+        $now,
+        '17' => isset($_GET['stato_custom']) ? $_GET['stato_custom'] : null,
+        '18' => isset($_GET['pozzetto_custom']) ? $_GET['pozzetto_custom'] : null,
+        $caditoie_equiv*/
+
+
+
+        $street = Street::find($data['codice_via']);
+
+        if($street) {
+            $item = Item::create($data);
+            $item->street()->associate($street);
+            $item->user()->associate($user);
+            $item->save();
+        }
+        if(isset($data['tagsIds'])){
+            $item->tags()->sync($data['tagsIds']);
+        }
+
+        $ret['result']=true;
+        $ret['id']=$item->id;
+
+        return $ret;
+
+    }
+
+    private function saveImage($imagedata,$imageName,$cartellaDelGiorno){
+        if(!Storage::disk('img_items')->exists($cartellaDelGiorno)) {
+            Storage::disk('img_items')->makeDirectory($cartellaDelGiorno, 0775, true);
+        }
+
+        $imagedata = str_replace('data:image/jpg;base64,', '', $imagedata);
+        $imagedata = str_replace(' ', '+', $imagedata);
+
+        if(Storage::disk('img_items')->exists($cartellaDelGiorno.$imageName.'.jpg')) {
+            Storage::disk('img_items')->put($cartellaDelGiorno.$imageName.'_'.date('His').'.jpg', base64_decode($imagedata));
+        } else {
+            Storage::disk('img_items')->put($cartellaDelGiorno.$imageName.'.jpg', base64_decode($imagedata));
+        }
     }
 }
