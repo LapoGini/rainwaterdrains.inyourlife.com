@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\City;
 use App\Models\Item;
 use App\Models\Street;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
@@ -146,8 +147,9 @@ class ItemController extends Controller
      */
     public function setCaditoia(Request $request)
     {
-        $user = Auth::guard('api')->user();
+        //$user = Auth::guard('api')->user();
         $data = $request->all();
+        $user = User::find($data['id_user']);
 
         if (empty($data['comune_id'])){
             $ret['result']=false;
@@ -187,6 +189,7 @@ class ItemController extends Controller
             $data['larghezza']=0.5;
             $data['profondita']=0.5;
         }
+        $caditoie_equiv=0;
 
         //distinzione tra cliente UNIACQUE e APRICA
         switch ($cliente_comune->name) {
@@ -224,7 +227,7 @@ class ItemController extends Controller
         $data['tagsIds']=[$data['statocaditoia'],$data['tipopozzetto'],$data['recapito']];
 
         $timestamp_numero=explode('_',$data['caditoia_id'])[0];
-        $data['time_stamp_pulizia']=date('Y-m-d H:i:s',$timestamp_numero);
+        $data['time_stamp_pulizia']=date('Y-m-d H:i:s',substr($timestamp_numero, 0, -3));
 
         $street = Street::find($data['codice_via']);
         if($street) {
@@ -235,15 +238,13 @@ class ItemController extends Controller
                 'civic' => $data['ubicazione'],
                 'latitude' => $data['lat'],
                 'longitude' => $data['lng'],
-                'accuracy' => $data['tolleranza'],
+                'accuracy' => (empty($data['tolleranza']) ? 0 : $data['tolleranza']),
                 'altitude' => $data['altitude'],
                 'height' => $data['lunghezza'],
                 'width' => $data['larghezza'],
                 'depth' => $data['profondita'],
                 'pic' => $data['caditoia_id'].'.jpg',
                 'note' => $data['note'],
-                /*'street_id' => $street->id,
-                'user_id' => $user->id,*/
                 'note' => $data['note'],
                 'caditoie_equiv' => $caditoie_equiv
             ]);
@@ -378,5 +379,19 @@ class ItemController extends Controller
 =======
         
 >>>>>>> 3733e0b6b90c12247cd8bac0fd5ba1691da5ce60
+    }
+
+    public function testPostConBearer (Request $request){
+        $data=$request->all();
+        $data['note']='BEARER PRESENTE';
+        $data['result'] = true;
+        return response()->json($data, 200);
+    }
+
+    public function testPostSenzaBearer (Request $request){
+        $data=$request->all();
+        $data['note']='test senza bearer';
+        $data['result'] = true;
+        return response()->json($data, 200);
     }
 }
