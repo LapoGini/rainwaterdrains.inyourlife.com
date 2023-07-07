@@ -96,7 +96,7 @@
                     <button id="deletableButton" type="submit" class="rounded text-decoration-none fw-bold bg-danger text-light border-0 py-2 px-3">
                         ELIMINA DATI FILTRATI DA TELEFONO
                     </button>
-                    <p id="confirm-delete"></p>
+                    <p id="confirm-delete" class="fw-light fst-italic"></p>
                 </div>
                 <div class="col-6 filter-buttons text-end">
                     <button id="filterButton" type="submit" class="rounded text-decoration-none fw-bold bg-primary text-light border-0 py-2 px-3">
@@ -110,9 +110,11 @@
         </form>
     </div>
 
-    <a id="downloadZip" class="btn btn-primary">Scarica file ZIP</a>
+    <div class="button-zip text-end">
+        <a id="downloadZip" class="btn btn-success">Scarica ZIP<i class="ps-2 fa-solid fa-file-zipper"></i></a>
+    </div>
 
-    <table id="zanetti-table-download" class="table table-hover w-100 text-sm text-left text-gray-500 dark:text-gray-400">
+    <table id="zanetti-table-download" class="table table-striped table-hover w-100 text-sm text-left text-gray-500 dark:text-gray-400">
         <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
             <tr>
                 <th scope="col" class="px-6 py-3">
@@ -188,6 +190,8 @@
         $('#zanetti-table-download').DataTable({
             initComplete: function(setting, json) {
                 hideDownloadButtons();
+                hideDeletableButton();
+                hideZipButton();
             },
             dom: 'Bfltip',
             language: {
@@ -216,7 +220,14 @@
         // button per eliminare caditoie cancellabili
         $('#deletableButton').on('click', function() {
             deleteSewers();
+
+            $('#confirm-delete').show();
+            // Nascondere il paragrafo
+            setTimeout(function() {
+                $('#confirm-delete').hide();
+            }, 5000);
         })
+        // button per Zip
         $('#downloadZip').on('click', function() {
             downloadZip();
         })
@@ -257,7 +268,6 @@
             }
         });
 
-
         // funzione per nascondere i buttons
         function hideDownloadButtons() {
             $('.buttons-csv, .buttons-excel').hide();
@@ -266,7 +276,24 @@
         function showDownloadButtons() {
             $('.buttons-csv, .buttons-excel').show();
         }
-        // funzione per i filtri
+        // funzione per nascondere il button Zip
+        function hideZipButton() {
+            $('#downloadZip').hide();
+        }
+        // funzione per mostrare il button Zip
+        function showZipButton() {
+            $('#downloadZip').show();
+        }
+        // funzione per nascondere il button per le caditoie cancellabili
+        function hideDeletableButton() {
+            $('#deletableButton').hide();
+        }
+        // funzione per mostrare il button per le caditoie cancellabili
+        function showDeletableButton() {
+            $('#deletableButton').show();
+        }
+
+        // funzione per Zippare le immagini filtrate
         function downloadZip() {
             var clientId = $('#client').val();
             var comuneId = $('#comune').val();
@@ -278,7 +305,6 @@
             $('input[name="tags[]"]:checked').each(function() {
                 selectedTags.push($(this).val());
             });
-            // chiamata AJAX per avere i dati filtrati
             $.ajax({
                 url: "{{ route('items.downloadZip') }}",
                 method: "GET",
@@ -301,6 +327,7 @@
                 }
             });
         }
+        // funzione per applicare i filtri
         function applyFilters() {
             var clientId = $('#client').val();
             var comuneId = $('#comune').val();
@@ -312,7 +339,6 @@
             $('input[name="tags[]"]:checked').each(function() {
                 selectedTags.push($(this).val());
             });
-            // chiamata AJAX per avere i dati filtrati
             $.ajax({
                 url: "{{ route('items.filterData') }}",
                 method: "GET",
@@ -330,8 +356,12 @@
                     $('#deletableButton').show();
                     if ($('#client').val() === '') {
                         hideDownloadButtons();
+                        hideDeletableButton();
+                        hideZipButton();
                     } else {
                         showDownloadButtons();
+                        showDeletableButton();
+                        showZipButton();
                     }
                 },
                 error: function(xhr, status, error) {
@@ -339,15 +369,18 @@
                 }
             });
         }
-        // Funzione per reimpostare i filtri
+        // Funzione per resettare i filtri
         function resetFilters() {
-            $('#client, #comune, #street, #operator,#fromDate, #toDate').val('');
+            $('#operator,#fromDate, #toDate').val('');
+            $('#client, #comune, #street').val('').trigger('change.select2');
             $('input[name="tags[]"]').prop('checked', false);
             $('#deletableButton').hide();
             hideDownloadButtons();
+            hideDeletableButton();
+            hideZipButton();
             applyFilters();
         }
-        // Funzione per eliminazione
+        // Funzione per rendere cancellabili le caditoie
         function deleteSewers() {
             var clientId = $('#client').val();
             var comuneId = $('#comune').val();
@@ -359,7 +392,6 @@
             $('input[name="tags[]"]:checked').each(function() {
                 selectedTags.push($(this).val());
             });
-
             let text = "Sei sicuro di voler eliminare le caditoie?\nScegli Ok o Annulla.";
             if (confirm(text)) {
                 $.ajax({
@@ -376,7 +408,7 @@
                     itemCancellabile: true,
                   },
                     success: function(response) {
-                        text = "Le Caditoie sono state eliminate con successo!";
+                        text = "Hai reso cancellabili le caditoie!";
                         document.getElementById("confirm-delete").innerHTML = text;
                     },
                     error: function(xhr, status, error) {
@@ -384,7 +416,7 @@
                     }
                 })
             } else {
-                text = "Le Caditoie non sono state eliminate!";
+                text = "Le Caditoie non verranno eliminate!";
             }
             document.getElementById("confirm-delete").innerHTML = text;
         }
