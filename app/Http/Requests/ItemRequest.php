@@ -24,7 +24,7 @@ class ItemRequest extends FormRequest
     {
         return [
             'name' => 'required|string',
-            'city_id' => 'required',
+            'comune' => 'required',
             'latitude' => 'required|numeric',
             'longitude' => 'required|numeric',
             'altitude' => 'required|numeric',

@@ -10,6 +10,8 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Carbon;
 
 use App\Utils\Functions;
 
@@ -84,7 +86,6 @@ class ItemController extends Controller
             return response()->json(['validation_errors' => $validator->messages()],201);
         }
 
-
         $street = Street::find($data['street_id']);
 
         if($street) {
@@ -148,16 +149,24 @@ class ItemController extends Controller
         $user = Auth::guard('api')->user();
         $data = $request->all();
 
+        if (empty($data['comune_id'])){
+            $ret['result']=false;
+            $ret['error']='Paramentri mancanti';
+            return $ret;
+        }
+
         $date = new \DateTime('now',new \DateTimeZone('Europe/Rome'));
         $cartellaDelGiorno='/'.$date->format('Ymd').'/';
 
         $comune=City::find($data['comune_id']);
-        if (empty($data['immagine']) && $comune->pics) {
+        if (!empty($data['immagine'])) {
             $this->saveImage($data['immagine'],$data['caditoia_id'],$cartellaDelGiorno);
         }
 
+        $cliente_comune=$comune->user()->first();    
+
         if ($data['recapito']=='') {
-            $data['recapito']=1;
+            $data['recapito']=1; //ID Fognatura Bianca
         }
         if ($data['lunghezza']=='') {
             $data['lunghezza']=0.5;
@@ -166,7 +175,6 @@ class ItemController extends Controller
             $data['larghezza']=0.5;
         } else {
             $data['larghezza']/=100;
-
         }
         if ($data['profondita']=='') {
             $data['profondita']=0.5;
@@ -174,78 +182,71 @@ class ItemController extends Controller
             $data['profondita']/=100;
         }
 
-        if ($data['tipopozzetto']!=4) {  //se griglia
+        if ($data['tipopozzetto']!=6) {  //se NON griglia
             $data['lunghezza']=0.5;
             $data['larghezza']=0.5;
             $data['profondita']=0.5;
         }
 
-        if ($data['tipopozzetto']==4) {   //se griglia
-            //facciamo il calcolo
-            if ((int) $data['larghezza']>=25) {
-                $tmp= (double) $data['lunghezza'];
-                $tmp=$tmp*2;
-            } elseif ((int) $data['profondita'] < 30) {
-                $tmp= (double) $data['lunghezza'];
-                $tmp=$tmp/2;
-            } else{
-                $tmp= (double) $data['lunghezza'];
-                $tmp=$tmp*2;
-            }
-            $caditoie_equiv=(string) $tmp;
-
-        } else {
-            $caditoie_equiv="1";
+        //distinzione tra cliente UNIACQUE e APRICA
+        switch ($cliente_comune->name) {
+            case 'APRICA':
+                if ($data['tipopozzetto']==6) {   //se griglia
+                    //facciamo il calcolo
+                    if ((int) $data['larghezza']>=25) {
+                        $tmp= (double) $data['lunghezza'];
+                        $tmp=$tmp*2;
+                    } elseif ((int)$data['profondita'] < 30) {
+                        $tmp= (double)$data['lunghezza'];
+                        $tmp=$tmp/2;
+                    } else{
+                        $tmp= (double)$data['lunghezza'];
+                        $tmp=$tmp*2;
+                    }
+                    $caditoie_equiv=$tmp;
+                } else {
+                    $caditoie_equiv="1";
+                }
+                break;
+            case 'UNIACQUE':
+                if ($data['tipopozzetto']==6) {   //se griglia
+                    //facciamo il calcolo
+                    $s=(double)$data['larghezza']*(double)$data['profondita'];
+                    if ($s<=0.09) {
+                        $caditoie_equiv=round($data['lunghezza']/2,1); // L/2 se BxH=S minore uguale di 0.09
+                    } else {
+                        $caditoie_equiv=round($data['lunghezza']/5,1); // L/5 se BxH=S maggiore di 0.09
+                    }
+                }
+                break;
         }
 
-        /*caditoie_id,
-        stato_id,
-        caditoie_lat,
-        caditoie_lng,
-        caditoie_altitude,
-        codice_via,
-        comune_id,
-        caditoie_ubicazione,
-        tipo_pozzetto_id,
-        recapito,
-        larghezza,
-        lunghezza,
-        profondita,
-        foto_id,
-        caditoie_note,
-        user_id,
-        caditoie_timestamp,
-        stato_custom,
-        pozzetto_custom,
-        caditoie_equiv*/
+        $data['tagsIds']=[$data['statocaditoia'],$data['tipopozzetto'],$data['recapito']];
 
-        /* $_GET['caditoia_id'],
-        $_GET['statocaditoia'],
-        $_GET['lat'],
-        $_GET['lng'],
-        $_GET['altitude'],
-        $_GET['codice_via'],
-        $_GET['comune_id'],
-        $_GET['ubicazione'],
-        $_GET['tipopozzetto'],
-        $_GET['recapito'],
-        $_GET['larghezza'],
-        $_GET['lunghezza'],
-        $_GET['profondita'],
-        $FOTO['foto_id'],
-        $_GET['note'],
-        $user['user_id'],
-        $now,
-        '17' => isset($_GET['stato_custom']) ? $_GET['stato_custom'] : null,
-        '18' => isset($_GET['pozzetto_custom']) ? $_GET['pozzetto_custom'] : null,
-        $caditoie_equiv*/
-
-
+        $timestamp_numero=explode('_',$data['caditoia_id'])[0];
+        $data['time_stamp_pulizia']=date('Y-m-d H:i:s',$timestamp_numero);
 
         $street = Street::find($data['codice_via']);
-
         if($street) {
-            $item = Item::create($data);
+            $item = Item::make([
+                'id_sd' => $data['id_sd'],
+                'id_da_app' => $data['caditoia_id'],
+                'time_stamp_pulizia' => $data['time_stamp_pulizia'],
+                'civic' => $data['ubicazione'],
+                'latitude' => $data['lat'],
+                'longitude' => $data['lng'],
+                'accuracy' => $data['tolleranza'],
+                'altitude' => $data['altitude'],
+                'height' => $data['lunghezza'],
+                'width' => $data['larghezza'],
+                'depth' => $data['profondita'],
+                'pic' => $data['caditoia_id'].'.jpg',
+                'note' => $data['note'],
+                /*'street_id' => $street->id,
+                'user_id' => $user->id,*/
+                'note' => $data['note'],
+                'caditoie_equiv' => $caditoie_equiv
+            ]);
             $item->street()->associate($street);
             $item->user()->associate($user);
             $item->save();
@@ -274,5 +275,100 @@ class ItemController extends Controller
         } else {
             Storage::disk('img_items')->put($cartellaDelGiorno.$imageName.'.jpg', base64_decode($imagedata));
         }
+    }
+
+    /**
+     * ritorna caditoie fotografate per una determinata data
+     * @param Request la richiesta con data (Y-m-d) per filtrare dati 
+     * @return json dati di tutte le caditoie filtrate
+     */
+    public function getCaditoieScansionate (Request $request){
+        $giorno=$request->giorno;
+        if (empty($giorno)){
+            $date = new \DateTime('now',new \DateTimeZone('Europe/Rome'));
+            $giorno=$date->format('Y-m-d');
+        }
+        $items = Item::with('street', 'street.city', 'tags', 'user')->whereRaw('DATE_FORMAT(time_stamp_pulizia, "%Y-%m-%d")="'.$giorno.'"')->get();
+
+        $caditoie=[];
+        $row=0;
+        $aggregato['Griglia']=$aggregato['Griglia']=$aggregato['Griglia']=0;
+        foreach ($items as $i){
+            $itemTags = $i->tags;
+            foreach ($itemTags as $tag){
+                if ($tag->type=='Stato'){
+                    $caditoie[$row]['stato_nome']=$tag->name;
+                } else if ($tag->type=='Recapito'){
+                    $caditoie[$row]['recapito_nome']=$tag->name;
+                } else if ($tag->type=='Tipo Pozzetto'){
+                    $caditoie[$row]['pozzetto_nome']=$tag->name;
+                }
+            }
+            $caditoie[$row]['data_caditoia']=$i->time_stamp_pulizia;
+            $caditoie[$row]['ubicazione']=$i->civic;
+            $caditoie[$row]['strada_nome']=$i->street->name;
+            $caditoie[$row]['caditoie_lat']=$i->latitude;
+            $caditoie[$row]['caditoie_lng']=$i->longitude;
+            $caditoie[$row]['caditoie_altitude']=$i->altitude;
+            $caditoie[$row]['foto_id']=env('APP_URL') . '/img_items/' . date('Ymd', strtotime($i->time_stamp_pulizia)) . '/' . $i->pic;
+            $caditoie[$row]['caditoie_note']=$i->note;
+            $aggregato[$caditoie[$row]['pozzetto_nome']]++;
+            $row++;
+        }
+
+        $ret['result']=true;
+        $ret['cadiotie']=$caditoie;
+        $ret['aggregato'] = $aggregato;
+        return response()->json($ret, 200);     
+    }
+
+    /**
+     * ritorna caditoie fotografate per una determinata data ed una determinata via
+     * @param Request la richiesta con giorniindietro e codicevia per filtrare i dati
+     * @return json dati di tutte le caditoie filtrate
+     */
+    public function getCaditoieScansionatePerVia (Request $request){
+        $giorniindietro=$request->giorniindietro;
+        $codicevia=$request->codice_via;
+        if (empty($giorniindietro)){
+            $giorniindietro=7;
+        }
+
+        if (empty($codicevia)){
+            $ret['result'] = false;
+            $ret['error'] = "Parametro strada mancante";
+            return response()->json($ret, 200);
+        }
+
+        $items = Item::with('street', 'street.city', 'tags', 'user')->whereRaw('street_id='.$codicevia.' AND DATE_FORMAT(time_stamp_pulizia, "%Y-%m-%d")>="'.Carbon::now()->subDays($giorniindietro).'"')->get();
+
+        $caditoie=[];
+        $row=0;
+        foreach ($items as $i){
+            $itemTags = $i->tags;
+            foreach ($itemTags as $tag){
+                if ($tag->type=='Stato'){
+                    $caditoie[$row]['stato_nome']=$tag->name;
+                } else if ($tag->type=='Recapito'){
+                    $caditoie[$row]['recapito_nome']=$tag->name;
+                } else if ($tag->type=='Tipo Pozzetto'){
+                    $caditoie[$row]['pozzetto_nome']=$tag->name;
+                }
+            }
+            $caditoie[$row]['time_stamp_pulizia']=$i->time_stamp_pulizia;
+            $caditoie[$row]['ubicazione']=$i->civic;
+            $caditoie[$row]['strada_nome']=$i->street->name;
+            $caditoie[$row]['caditoie_lat']=$i->latitude;
+            $caditoie[$row]['caditoie_lng']=$i->longitude;
+            $caditoie[$row]['caditoie_altitude']=$i->altitude;
+            $caditoie[$row]['foto_id']=env('APP_URL') . '/img_items/' . date('Ymd', strtotime($i->time_stamp_pulizia)) . '/' . $i->pic;
+            $caditoie[$row]['caditoie_note']=$i->note;
+            $row++;
+        }
+
+        $ret['result']=true;
+        $ret['cadiotie']=$caditoie;
+        return response()->json($ret, 200);
+        
     }
 }

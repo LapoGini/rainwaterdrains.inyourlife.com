@@ -160,7 +160,6 @@ class CitiesStreetsItemsTagsSeeder extends Seeder
             $item->cancellabile = $cancellabile;
             $item->deleted_at = $deletedAt;
 
-
             $item->save();
 
             $item->tags()->attach(

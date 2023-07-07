@@ -35,7 +35,7 @@
 
         <div class="mb-3">
             <label for="password" class="form-label">Password</label>
-            <input type="text" class="form-control @error('password') is-invalid @enderror" id="password" name="password" value="">
+            <input type="password" class="form-control @error('password') is-invalid @enderror" id="password" name="password" value="">
             @error('password')
             <div class="invalid-feedback">
             {{ $message }}

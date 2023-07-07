@@ -8,6 +8,7 @@ use App\Http\Requests\StoreUserRequest;
 use App\Http\Requests\UpdateUserRequest;
 use jeremykenedy\LaravelRoles\Models\Role;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Hash;
 
 class UserController extends Controller
 {
@@ -27,7 +28,12 @@ class UserController extends Controller
     public function store(StoreUserRequest $request) : RedirectResponse
     {
         $validated = $request->validated();
+
+        // Cripta la password utilizzando bcrypt
+        $validated['password'] = Hash::make($validated['password']);
+
         $user = User::create($validated);
+
         if (isset($validated['rolesIds'])){
             $user->roles()->sync($validated['rolesIds']);
         }
@@ -47,6 +53,7 @@ class UserController extends Controller
         $exceptArr = [];
         if(!$validated['password']||!$validated['password']=="") {
             $exceptArr[] = 'password';
+            $user->password = Hash::make($validated['password']);
         }
         $user->update(Arr::except($validated, $exceptArr));
 

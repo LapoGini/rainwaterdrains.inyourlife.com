@@ -24,14 +24,14 @@
         </div>
 
         <div class="mb-3">
-            <label for="city_id" class="fw-light fst-italic d-block text-gray-700 text-sm font-bold mb-2">
+            <label for="comune" class="fw-light fst-italic d-block text-gray-700 text-sm font-bold mb-2">
                 Seleziona un comune:
             </label>
-            <select id="city_id" name="city_id" class="w-100 border border-gray-300 rounded px-4 py-2">
+            <select id="comune" name="comune" class="w-100 border border-gray-300 rounded px-4 py-2">
                 <option value="">Tutti</option>
                 @foreach($comuni as $comune)
-                    <option value="{{ $comune->id }}" {{ old('city_id', $item->street->city_id) == $comune->id ? 'selected' : '' }}>{{ $comune->name }}</option>
-                @endforeach                                 
+                    <option value="{{ $comune->id }}" {{ old('comune', $item->street->city_id) == $comune->id ? 'selected' : '' }}>{{ $comune->name }}</option>
+                @endforeach
             </select>
         </div>
 
@@ -154,5 +154,26 @@
         </a>                              
     </form>
 </div>
+
+<script>
+    $(document).ready(function() {
+        $('#comune').change(function() {
+            var selectedComune = $(this).val();
+            $('#street').val('');
+            $.ajax({
+                url: "/items/street/" + selectedComune,
+                type: 'GET',
+                success: function(response) {
+                    $('#street').html(response);
+                },
+                error: function(xhr, status, error) {
+                    console.log('error');
+                }
+            });
+        });
+    });
+</script>
+
+
 
 @endsection

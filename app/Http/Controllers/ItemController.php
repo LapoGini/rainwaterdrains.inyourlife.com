@@ -15,6 +15,7 @@ use Carbon\Carbon;
 use ZipArchive;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\DB;
 
 class ItemController extends Controller
 {
@@ -35,7 +36,15 @@ class ItemController extends Controller
         $tags = Tag::where('domain', 'item')->get();
         $groupedTags = [];
         foreach ($items as $item) {
+            $timeStamp = $item->time_stamp_pulizia;
+            // per calcolare se è notturno
+            $hour = (int) date('H', strtotime($timeStamp));
+            $item->calcolo_notturno = ($hour >= 20 || $hour < 6) ? 'si' : 'no';
             $itemTags = $item->tags;
+
+            // per creare la path
+            $item->pic_link = $this->createLinkPathFromImg_Item($item);
+
             foreach ($itemTags as $tag) {
                 $type = $tag->type;
                 $groupedTags[$item->id][$type][] = $tag;
@@ -48,9 +57,14 @@ class ItemController extends Controller
             $groupedTagsType[$type] = $tags;
         }
 
-
         return $dataTable->render('pages.Items.index', compact('items', 'clients', 'operators', 'streets', 'comuni', 'tags', 'itemsDate', 'tagTypes', 'groupedTags', 'groupedTagsType'));
         //return $dataTable->render('pages.items.index');
+    }
+
+    public function createLinkPathFromImg_Item($item) {
+        $folderPath = Storage::disk('img_items')->path('');
+        $linkPath = env('APP_URL') . '/img_items/' . date('Ymd', strtotime($item->time_stamp_pulizia)) . '/' . $item->pic;
+        return $linkPath;
     }
 
     public function getHtmlCityByClient($id) {
@@ -63,44 +77,74 @@ class ItemController extends Controller
         };
     }
 
-    public function getHtmlStreetByCity($id) {
-        $streets = Street::where('city_id', $id)->get();
+    public function getHtmlStreetByCity($city_id) {
+
+        $streets = Street::where('city_id', $city_id)->get();
+
         echo '<option value="">Tutti</option>';
         foreach($streets as $street) {
             echo '<option value="'.$street->id.'">'.$street->name.'</option>';
         };
     }
 
-    // devo recuperare la colonna id_da_app che si trova in items
-        // dopo di che la devo trasformare in un array di elementi che sono separati da '-'
-        // facendo explode o implode devo recuperare solamente il primo dato cioè il time stamp
-        // devo recuperare il dato e trasformarlo in una data effettiva
-        // devo pushare tutte le date dentro ad un array
-
     public function filterData(FilteredDataRequest $request)
     {
         $items = $this->getItems($request);
-        
-        $groupedTags = [];
+        $caditoie = [];
+        $row=0;
 
-        foreach ($items as $item) {
-            $itemTags = $item->tags;
+        foreach($items as $item) {
 
-            if($request->has('itemCancellabile')) {
-                $this->updateCancellabile($item->id);
+            $timeStamp = $item->time_stamp_pulizia;
+            // per calcolare se è notturno
+            $hour = (int) date('H', strtotime($timeStamp));
+            $item->calcolo_notturno = ($hour >= 20 || $hour < 6) ? 'si' : 'no';
+
+            $item->pic_link = $this->createLinkPathFromImg_Item($item);
+
+            $pozzetto_nome = null;
+            $stato_nome = null;
+            $recapito_nome = null;
+            
+            foreach ($item->tags()->get() as $tag) {
+                if ($tag->type == 'Stato') {
+                    $stato_nome = $tag->name;
+                } else if ($tag->type == 'Recapito') {
+                    $recapito_nome = $tag->name;
+                } else if ($tag->type == 'Tipo Pozzetto') {
+                    $pozzetto_nome = $tag->name;
+                }
             }
-            foreach ($itemTags as $tag) {
-                $type = $tag->type;
-                $groupedTags[$item->id][$type][] = $tag;
-            }
-        }
+            $caditoie[$row] = [
+                $item->street->name,
+                $item->street->city->name,
+                $item->civic,
+                $pozzetto_nome,
+                $stato_nome,
+                $item->height,
+                $item->width,
+                $item->depth,
+                $item->height * $item->width * $item->depth,
+                $item->width * $item->depth,
+                $item->caditoie_equiv,
+                $recapito_nome,
+                $item->time_stamp_pulizia,
+                $item->latitude,
+                $item->longitude,
+                $item->altitude,
+                $item->user->name,
+                'solo georef.',
+                $item->calcolo_notturno,
+                $item->pic_link,
+                $item->note,
+            ];
+        };
 
-        //$zipFilePath = $this->createZipFileFromImg_Items($items);
-
-        return view('pages.Items.filtered_data', compact('items', 'groupedTags'));
+        return response()->json(['data' => $caditoie]);
     }
 
-    private function getItems(FilteredDataRequest $request) {
+    private function getItems(FilteredDataRequest $request) 
+    {
 
         $clientId = $request->input('clientId');
         $comuneId = $request->input('comuneId');
@@ -153,7 +197,8 @@ class ItemController extends Controller
         return $items;
     }
 
-    public function createZipFileFromImg_Items(FilteredDataRequest $request) {
+    public function createZipFileFromImg_Items(FilteredDataRequest $request) 
+    {
 
         $items = $this->getItems($request);
 
@@ -204,13 +249,15 @@ class ItemController extends Controller
     public function edit(Item $item)
     {
         $items = Item::with('street', 'street.city', 'tags', 'user')->orderBy('id', 'DESC')->paginate(50);
-        $streets = Street::with('city')->get();
         $comuni = City::all();
+
+        $strada_caditoia =  Street::find($item->street_id);
+
+        $streets = Street::with('city')->where('city_id',$strada_caditoia->city_id)->get();
         $clients = User::join('role_user', 'users.id', '=', 'role_user.user_id')->join('roles', 'role_user.role_id', '=', 'roles.id')->where('roles.id', 3)->select('users.*')->get();
         $tagTypes = Tag::where('domain', 'item')->distinct('type')->pluck('type');
         $operators = User::join('role_user', 'users.id', '=', 'role_user.user_id')->join('roles', 'role_user.role_id', '=', 'roles.id')->where('roles.id', 2)->select('users.*')->get();
         $itemsDate = Item::pluck('time_stamp_pulizia');
-
 
         $tags = Tag::where('domain', 'item')->get();
         $groupedTags = [];
@@ -227,7 +274,6 @@ class ItemController extends Controller
             $tags = Tag::where('domain', 'item')->where('type', $type)->get();
             $groupedTagsType[$type] = $tags;
         }
-        
 
         return view('pages.Items.edit', compact('item', 'items', 'clients', 'operators', 'streets', 'comuni', 'tags', 'itemsDate', 'tagTypes', 'groupedTags', 'groupedTagsType'));
     }

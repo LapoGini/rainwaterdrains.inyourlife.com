@@ -118,19 +118,67 @@
         <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
             <tr>
                 <th scope="col" class="px-6 py-3">
-                    ID
+                    Comune
                 </th>
                 <th scope="col" class="px-6 py-3">
-                    Indirizzo
+                    Provincia
                 </th>
                 <th scope="col" class="px-6 py-3">
-                    Dimensioni
+                    Civico
                 </th>
                 <th scope="col" class="px-6 py-3">
-                    Caratteristiche
+                    Tipologia
+                </th>
+                <th scope="col" class="px-6 py-3">
+                    Stato
+                </th>
+                <th scope="col" class="px-6 py-3">
+                    Lunghezza
+                </th>
+                <th scope="col" class="px-6 py-3">
+                    Larghezza
+                </th>
+                <th scope="col" class="px-6 py-3">
+                    Profondità
+                </th>
+                <th scope="col" class="px-6 py-3">
+                    Volume (m3)
+                </th>
+                <th scope="col" class="px-6 py-3">
+                    Area (m2)
+                </th>
+                <th scope="col" class="px-6 py-3">
+                    Caditoie equiv.
+                </th>
+                <th scope="col" class="px-6 py-3">
+                    Recapito
+                </th>
+                <th scope="col" class="px-6 py-3">
+                    Data pulizia
+                </th>
+                <th scope="col" class="px-6 py-3">
+                    Latitudine
+                </th>
+                <th scope="col" class="px-6 py-3">
+                    Longitudine
+                </th>
+                <th scope="col" class="px-6 py-3">
+                    Altitudine
                 </th>
                 <th scope="col" class="px-6 py-3">
                     Operatore
+                </th>
+                <th scope="col" class="px-6 py-3">
+                    Solo georef.
+                </th>
+                <th scope="col" class="px-6 py-3">
+                    Eseguite a mano in notturno
+                </th>
+                <th scope="col" class="px-6 py-3">
+                    Link fotografia 
+                </th>
+                <th scope="col" class="px-6 py-3">
+                    Note
                 </th>
                 <th scope="col" class="px-6 py-3">
                     Azioni
@@ -140,29 +188,83 @@
         <tbody>
             @foreach($items as $key=>$item)
                 <tr className="border-b dark:bg-gray-800 dark:border-gray-700">
-                    <th scope="row" className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
-                        {{$item->id}}
-                    </th>
                     <td className="px-6 py-4 comune-filtro">
-                        {{$item->street->name}}, {{$item->street->city->name}}
+                        {{$item->street->name}}
                     </td>
-                    <td className="px-6 py-4">
-                        {{round($item->height)}}L x {{round($item->width)}}S x {{round($item->depth)}}P
+                    <td className="px-6 py-4 comune-filtro">
+                        {{$item->street->city->name}}
                     </td>
-                    <td class="px-6">
-                        @if (isset($groupedTags[$item->id]))
-                            @foreach ($groupedTags[$item->id] as $type => $tags)
-                                <p>
-                                    <small class="font-bold mr-1">{{ $type }}:</small>
-                                    @foreach ($tags as $tag)
-                                        <span class="bg-gray-100 text-gray-800 text-xs font-medium mr-2 px-2.5 py-0.5 rounded dark:bg-gray-700 dark:text-gray-300">{{ $tag->name }}</span>
-                                    @endforeach
-                                </p>
+                    <td className="px-6 py-4 comune-filtro">
+                        {{$item->civic}}
+                    </td>
+                    <td className="px-6 py-4 comune-filtro">
+                        @if (isset($groupedTags[$item->id]) && isset($groupedTags[$item->id]['Tipo Pozzetto']))
+                            <small class="font-bold mr-1">Tipo Pozzetto:</small>
+                            @foreach ($groupedTags[$item->id]['Tipo Pozzetto'] as $tag)
+                                <span class="bg-gray-100 text-gray-800 text-xs font-medium mr-2 px-2.5 py-0.5 rounded dark:bg-gray-700 dark:text-gray-300">{{ $tag->name }}</span>
                             @endforeach
                         @endif
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="px-6 py-4 comune-filtro">
+                        @if (isset($groupedTags[$item->id]) && isset($groupedTags[$item->id]['Stato']))
+                            <small class="font-bold mr-1">Stato:</small>
+                            @foreach ($groupedTags[$item->id]['Stato'] as $tag)
+                                <span class="bg-gray-100 text-gray-800 text-xs font-medium mr-2 px-2.5 py-0.5 rounded dark:bg-gray-700 dark:text-gray-300">{{ $tag->name }}</span>
+                            @endforeach
+                        @endif
+                    </td>
+                    <td className="px-6 py-4 comune-filtro">
+                        {{$item->height}}
+                    </td>
+                    <td className="px-6 py-4 comune-filtro">
+                        {{$item->width}}
+                    </td>
+                    <td className="px-6 py-4 comune-filtro">
+                        {{$item->depth}}
+                    </td>
+                    <td className="px-6 py-4 comune-filtro">
+                        {{$item->height * $item->width * $item->depth}}
+                    </td>
+                    <td className="px-6 py-4 comune-filtro">
+                        {{$item->width * $item->depth}}
+                    </td>
+                    <td className="px-6 py-4 comune-filtro">
+                        {{$item->caditoie_equiv}}
+                    </td>
+                    <td className="px-6 py-4 comune-filtro">
+                        @if (isset($groupedTags[$item->id]) && isset($groupedTags[$item->id]['Recapito']))
+                            <small class="font-bold mr-1">Recapito:</small>
+                            @foreach ($groupedTags[$item->id]['Recapito'] as $tag)
+                                <span class="bg-gray-100 text-gray-800 text-xs font-medium mr-2 px-2.5 py-0.5 rounded dark:bg-gray-700 dark:text-gray-300">{{ $tag->name }}</span>
+                            @endforeach
+                        @endif
+                    </td>
+                    <td className="px-6 py-4 comune-filtro">
+                        {{$item->time_stamp_pulizia}}
+                    </td>
+                    <td className="px-6 py-4 comune-filtro">
+                        {{$item->latitude}}
+                    </td>
+                    <td className="px-6 py-4 comune-filtro">
+                        {{$item->longitude}}
+                    </td>
+                    <td className="px-6 py-4 comune-filtro">
+                        {{$item->altitude}}
+                    </td>
+                    <td className="px-6 py-4 comune-filtro">
                         {{$item->user->name}}
+                    </td>
+                    <td className="px-6 py-4 comune-filtro">
+                        SOLO GEOREF.
+                    </td>
+                    <td className="px-6 py-4 comune-filtro">
+                        {{$item->calcolo_notturno}}
+                    </td>
+                    <td className="px-6 py-4 comune-filtro">
+                        {{$item->pic_link}}
+                    </td>
+                    <td className="px-6 py-4 comune-filtro">
+                        {{$item->note}}
                     </td>
                     <td className="px-6 py-4">
                         <div className="flex-none">
@@ -188,6 +290,9 @@
         $('#deletableButton').hide();
         hideDownloadButtons();
         $('#zanetti-table-download').DataTable({
+            "columnDefs": [
+                { "visible": false, "targets": [2, 5, 6, 7, 8, 9, 10, 13, 14, 15, 17, 18, 19] }
+            ],
             initComplete: function(setting, json) {
                 hideDownloadButtons();
                 hideDeletableButton();
@@ -256,7 +361,7 @@
                 $('#street').html('');
             } else {
                 $.ajax({
-                    url: "items/street/" + selectedComune, 
+                    url: "/items/street/" + selectedComune, 
                     type: 'GET',
                     success: function(response) {
                         $('#street').html(response);
@@ -352,7 +457,8 @@
                     tags: selectedTags,
                 },
                 success: function(response) {
-                    $('#zanetti-table-download tbody').html(response);
+                    var table = $('#zanetti-table-download').DataTable();
+                    table.clear().rows.add(response.data).draw(); // Aggiornare la tabella con i nuovi dati filtrati
                     $('#deletableButton').show();
                     if ($('#client').val() === '') {
                         hideDownloadButtons();
