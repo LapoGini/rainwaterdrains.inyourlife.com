@@ -105,39 +105,74 @@ class ItemController extends Controller
     /**
      * ritorna id item aggiornato con data deleted a NOW()
      *
-     * @param int $id Item da aggiornare
+     * @param Request $request caditoia_id, id_user, iduserhash Item da aggiornare
      * @return boolean true or false
      */
-    public function setDeleted(int $id)
+    public function setDeleted(Request $request)
     {
-        $item = Item::find($id);
-        $result=false;
+        $data = $request->all()['data'];
+        $check=$this->checkUser($data['id_user'],$data['iduserhash']);
+
+        if ($check['result']){
+            $user=$check['user'];
+        } else {
+            $ret['result']=false;
+            $ret['error']=$check;
+            return response()->json($ret, 200);
+        }
+
+        $item = Item::where('id_da_app',$data['caditoia_id'])->first();
         if ($item->cancellabile && empty($item->deleted_at)) {
             $date = new \DateTime('now',new \DateTimeZone('Europe/Rome'));
             $item->deleted_at= $date->format('Y-m-d H:i:s');
             $result=$item->save();
         }
-        return $result;
+        $ret['result']=true;
+        return response()->json($ret, 200);
     }
 
     /**
      * ritorna elenco id item da cancellare su una determinata scheda SD che viene passata in richiesta
      * e con valore deleted_at==NULL
      *
-     * @param string $id_SD Item da aggiornare
+     * @param Request $request da prendere is_user, iduserhash e id_sd Item da aggiornare
      * @return string|false elenco id separati da virgola
      */
-    public function getCancellabili(string $id_SD)
+    public function getCancellabili(Request $request)
     {
-        $items = Item::where('id_sd',$id_SD)->whereNotNull('cancellabile')->whereNull('deleted_at')->get();
-        $list=[];
-        foreach ($items as $i){
-            $list[]=$i->id;
+        $data = $request->all()['data'];
+
+        $check=$this->checkUser($data['id_user'],$data['iduserhash']);
+
+        if ($check['result']){
+            $user=$check['user'];
+        } else {
+            $ret['result']=false;
+            $ret['error']=$check;
+            return response()->json($ret, 200);
         }
 
-        if (!empty($list)){
-            return implode(",",$list);
-        } else return false;
+        $id_SD=$data['id_sd'];
+
+        if (empty($id_SD)){
+            $ret['result']=false;
+            $ret['error']='nessuna scheda SD passata';
+            return response()->json($ret, 200);
+        }
+
+        $items = Item::where('id_sd',$id_SD)->whereNotNull('cancellabile')->whereNull('deleted_at')->get();
+
+        $list=[];
+        foreach ($items as $i){
+            $list[]=$i->id_da_app;
+        }
+
+
+        $ret['result']=true;
+        $ret['cancellabili']= $list;
+
+
+        return response()->json($ret, 200);
     }
 
     /**
@@ -148,12 +183,52 @@ class ItemController extends Controller
     public function setCaditoia(Request $request)
     {
         //$user = Auth::guard('api')->user();
-        $data = $request->all();
-        $user = User::find($data['id_user']);
+        $data = $request->all()['data'];
+
+        if(!isset($data['iduserhash'])) $data['iduserhash']='';
+        if(!isset($data['id_user'])) $data['id_user']=0;
+        if(!isset($data['tipopozzetto'])) $data['tipopozzetto']=0;
+        if(!isset($data['lunghezza'])) $data['lunghezza']='';
+        if(!isset($data['larghezza'])) $data['larghezza']='';
+        if(!isset($data['profondita'])) $data['profondita']='';
+        if(!isset($data['recapito'])) $data['recapito']=0;
+        if(!isset($data['ubicazione'])) $data['ubicazione']='';
+        if(!isset($data['statocaditoia'])) $data['statocaditoia']=0;
+        if(!isset($data['note'])) $data['note']='';
+        if(!isset($data['caditoia_id'])) $data['caditoia_id']=0;
+        if(!isset($data['lat'])) $data['lat']='';
+        if(!isset($data['lng'])) $data['lng']='';
+        if(!isset($data['altitude'])) $data['altitude']=0;
+        if(!isset($data['tolleranza'])) $data['tolleranza']=0;
+        if(!isset($data['comune_id'])) $data['comune_id']=0;
+        if(!isset($data['codice_via'])) $data['codice_via']=0;
+        if(!isset($data['immagine'])) $data['immagine']='';
+
+        $api_token=substr($data['iduserhash'], 0, -1);
+        $api_token=substr($api_token, 1);
 
         if (empty($data['comune_id'])){
             $ret['result']=false;
             $ret['error']='Paramentri mancanti';
+            $ret['request']=$data;
+            return $ret;
+        }
+
+        if (empty($data['id_user']) || empty($api_token)){
+            $ret['result']=false;
+            $ret['error']='id_user and api_token necessari necessario in chiamata';
+            $ret['request']=$data;
+            $ret['api_token']=$api_token;
+            return $ret;
+        }
+
+        $user = User::where('api_token',$api_token)->find($data['id_user']);
+
+        if (empty($user)){
+            $ret['result']=false;
+            $ret['error']='utente non trovato o non autenticato';
+            $ret['request']=$data;
+            $ret['api_token']=$api_token;
             return $ret;
         }
 
@@ -165,7 +240,7 @@ class ItemController extends Controller
             $this->saveImage($data['immagine'],$data['caditoia_id'],$cartellaDelGiorno);
         }
 
-        $cliente_comune=$comune->user()->first();    
+        $cliente_comune=$comune->user()->first();
 
         if ($data['recapito']=='') {
             $data['recapito']=1; //ID Fognatura Bianca
@@ -268,7 +343,7 @@ class ItemController extends Controller
             Storage::disk('img_items')->makeDirectory($cartellaDelGiorno, 0775, true);
         }
 
-        $imagedata = str_replace('data:image/jpg;base64,', '', $imagedata);
+        $imagedata = str_replace('data:image/jpeg;base64,', '', $imagedata);
         $imagedata = str_replace(' ', '+', $imagedata);
 
         if(Storage::disk('img_items')->exists($cartellaDelGiorno.$imageName.'.jpg')) {
@@ -278,13 +353,53 @@ class ItemController extends Controller
         }
     }
 
+    private function checkUser($id_user,$iduserhash){
+        $api_token=substr($iduserhash, 0, -1);
+        $api_token=substr($api_token, 1);
+
+        if (empty($id_user) || empty($api_token)){
+            $ret['result']=false;
+            $ret['error']='id_user and api_token necessari necessario in chiamata';
+            $ret['api_token']=$api_token;
+            return $ret;
+            exit;
+        }
+
+        $user = User::where('api_token',$api_token)->find($id_user);
+
+        if (empty($user)){
+            $ret['result']=false;
+            $ret['error']='utente non trovato o non autenticato';
+            $ret['api_token']=$api_token;
+            return $ret;
+            exit;
+        }
+
+        $ret['result']=true;
+        $ret['user']=$user;
+
+        return $ret;
+    }
+
     /**
      * ritorna caditoie fotografate per una determinata data
-     * @param Request la richiesta con data (Y-m-d) per filtrare dati 
+     * @param Request la richiesta con data (Y-m-d) per filtrare dati
      * @return json dati di tutte le caditoie filtrate
      */
     public function getCaditoieScansionate (Request $request){
-        $giorno=$request->giorno;
+
+        $data = $request->all()['data'];
+        $check=$this->checkUser($data['id_user'],$data['iduserhash']);
+
+        if ($check['result']){
+            $user=$check['user'];
+        } else {
+            $ret['result']=false;
+            $ret['error']=$check;
+            return response()->json($ret, 200);
+        }
+
+        $giorno=$data['giorno'];
         if (empty($giorno)){
             $date = new \DateTime('now',new \DateTimeZone('Europe/Rome'));
             $giorno=$date->format('Y-m-d');
@@ -320,7 +435,7 @@ class ItemController extends Controller
         $ret['result']=true;
         $ret['cadiotie']=$caditoie;
         $ret['aggregato'] = $aggregato;
-        return response()->json($ret, 200);     
+        return response()->json($ret, 200);
     }
 
     /**
@@ -329,8 +444,19 @@ class ItemController extends Controller
      * @return json dati di tutte le caditoie filtrate
      */
     public function getCaditoieScansionatePerVia (Request $request){
-        $giorniindietro=$request->giorniindietro;
-        $codicevia=$request->codice_via;
+        $data = $request->all()['data'];
+        $check=$this->checkUser($data['id_user'],$data['iduserhash']);
+
+        if ($check['result']){
+            $user=$check['user'];
+        } else {
+            $ret['result']=false;
+            $ret['error']=$check;
+            return response()->json($ret, 200);
+        }
+
+        $giorniindietro=$data['giorniindietro'];
+        $codicevia=$data['codice_via'];
         if (empty($giorniindietro)){
             $giorniindietro=7;
         }
@@ -344,11 +470,7 @@ class ItemController extends Controller
         $items = Item::with('street', 'street.city', 'tags', 'user')->whereRaw('street_id='.$codicevia.' AND DATE_FORMAT(time_stamp_pulizia, "%Y-%m-%d")>="'.Carbon::now()->subDays($giorniindietro).'"')->get();
 
         $caditoie=[];
-<<<<<<< HEAD
         $row=0;
-=======
-        $row=0; 
->>>>>>> 3733e0b6b90c12247cd8bac0fd5ba1691da5ce60
         foreach ($items as $i){
             $itemTags = $i->tags;
             foreach ($itemTags as $tag){
@@ -374,11 +496,8 @@ class ItemController extends Controller
         $ret['result']=true;
         $ret['cadiotie']=$caditoie;
         return response()->json($ret, 200);
-        
-<<<<<<< HEAD
-=======
-        
->>>>>>> 3733e0b6b90c12247cd8bac0fd5ba1691da5ce60
+
+
     }
 
     public function testPostConBearer (Request $request){

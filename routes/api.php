@@ -27,7 +27,11 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 //Route::post('register',[AuthController::class,'register']);
 Route::get('login',[AuthController::class,'login']);
 Route::post('/setCaditoia', [ItemController::class, 'setCaditoia'])->name('api.items.setCaditoia');
-Route::post('/testPostSenzaBearer', [ItemController::class, 'testPostSenzaBearer'])->name('api.items.testPostSenzaBearer');
+Route::post('/delete_caditoie', [ItemController::class, 'getCancellabili'])->name('api.items.getCancellabili');
+Route::post('/delete_caditoie_id', [ItemController::class, 'setDeleted'])->name('api.items.setDeleted');
+Route::post('/scansioni/', [ItemController::class, 'getCaditoieScansionate'])->name('api.items.getCaditoieScansionate');
+Route::post('/scansioniPerVia/', [ItemController::class, 'getCaditoieScansionatePerVia'])->name('api.items.getCaditoieScansionatePerVia');
+Route::post('/aggiungiVia', [StreetController::class, 'setVia'])->name('api.streets.setVia');
 
 Route::group(['middleware' => ['auth:api']], function () {
     Route::post('logout', [AuthController::class, 'logout']);
@@ -45,14 +49,4 @@ Route::group(['middleware' => ['auth:api']], function () {
 
     Route::get('/items', [ItemController::class, 'getAll'])->name('api.items.all');
     Route::post('/item', [ItemController::class, 'set'])->name('api.items.set');
-
-    //aggiunte per Zanetti
-    Route::get('/delete_caditoie/{id_sd}', [ItemController::class, 'getCancellabili'])->name('api.items.getCancellabili');
-    Route::get('/delete_caditoie_id/{id}', [ItemController::class, 'setDeleted'])->name('api.items.setDeleted');
-    Route::get('/scansioni/', [ItemController::class, 'getCaditoieScansionate'])->name('api.items.getCaditoieScansionate');
-    Route::get('/scansioniPerVia/', [ItemController::class, 'getCaditoieScansionatePerVia'])->name('api.items.getCaditoieScansionatePerVia');
-
-    Route::post('/testPostConBearer', [ItemController::class, 'testPostConBearer'])->name('api.items.testPostConBearer');
-   
-    Route::post('/aggiungiVia', [StreetController::class, 'setVia'])->name('api.streets.setVia');
 });
