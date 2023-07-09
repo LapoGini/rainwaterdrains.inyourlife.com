@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Street;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
+use App\Models\User;
 
 use App\Utils\Functions;
 
@@ -52,7 +53,7 @@ class StreetController extends Controller
             return response()->json([$ret], 200);
         }
 
-        $strada=Street::where('name',$data['nuova_strada'])->get();
+        $strada=Street::where('name',$data['nuova_strada'])->where('city_id',$data['comune_id'])->get();
         if ($strada->count()>0){
             $ret['result']=false;
             $ret['error']="Questa strada esiste già";

@@ -302,7 +302,8 @@ class ItemController extends Controller
         $data['tagsIds']=[$data['statocaditoia'],$data['tipopozzetto'],$data['recapito']];
 
         $timestamp_numero=explode('_',$data['caditoia_id'])[0];
-        $data['time_stamp_pulizia']=date('Y-m-d H:i:s',substr($timestamp_numero, 0, -3));
+
+        $data['time_stamp_pulizia']=$date->setTimestamp(substr($timestamp_numero, 0, -3))->format('Y-m-d H:i:s');
 
         $street = Street::find($data['codice_via']);
         if($street) {
@@ -405,10 +406,9 @@ class ItemController extends Controller
             $giorno=$date->format('Y-m-d');
         }
         $items = Item::with('street', 'street.city', 'tags', 'user')->whereRaw('DATE_FORMAT(time_stamp_pulizia, "%Y-%m-%d")="'.$giorno.'"')->get();
-
         $caditoie=[];
         $row=0;
-        $aggregato['Griglia']=$aggregato['Griglia']=$aggregato['Griglia']=0;
+        $aggregato['Griglia']=$aggregato['Caditoia']=$aggregato['Bocca di Lupo']=0;
         foreach ($items as $i){
             $itemTags = $i->tags;
             foreach ($itemTags as $tag){
@@ -423,6 +423,8 @@ class ItemController extends Controller
             $caditoie[$row]['data_caditoia']=$i->time_stamp_pulizia;
             $caditoie[$row]['ubicazione']=$i->civic;
             $caditoie[$row]['strada_nome']=$i->street->name;
+            $caditoie[$row]['comune_nome']=$i->street->city->name;
+            $caditoie[$row]['provincia_id']=$i->street->city->district;
             $caditoie[$row]['caditoie_lat']=$i->latitude;
             $caditoie[$row]['caditoie_lng']=$i->longitude;
             $caditoie[$row]['caditoie_altitude']=$i->altitude;
@@ -433,7 +435,7 @@ class ItemController extends Controller
         }
 
         $ret['result']=true;
-        $ret['cadiotie']=$caditoie;
+        $ret['caditoie']=$caditoie;
         $ret['aggregato'] = $aggregato;
         return response()->json($ret, 200);
     }
@@ -482,8 +484,8 @@ class ItemController extends Controller
                     $caditoie[$row]['pozzetto_nome']=$tag->name;
                 }
             }
-            $caditoie[$row]['time_stamp_pulizia']=$i->time_stamp_pulizia;
-            $caditoie[$row]['ubicazione']=$i->civic;
+            $caditoie[$row]['data_caditoia']=$i->time_stamp_pulizia;
+            $caditoie[$row]['caditoie_ubicazione']=$i->civic;
             $caditoie[$row]['strada_nome']=$i->street->name;
             $caditoie[$row]['caditoie_lat']=$i->latitude;
             $caditoie[$row]['caditoie_lng']=$i->longitude;
@@ -494,7 +496,7 @@ class ItemController extends Controller
         }
 
         $ret['result']=true;
-        $ret['cadiotie']=$caditoie;
+        $ret['caditoie']=$caditoie;
         return response()->json($ret, 200);
 
 
