@@ -54,11 +54,11 @@
                         <a class="px-3 py-2 rounded me-3 bg-black text-white" href="{{ route('users.edit', $user) }}">
                             <i class="fas fa-pen-to-square"></i>
                         </a>
-                        <a class="px-3 py-2 rounded bg-danger text-white" href="{{ route('users.destroy', $user) }}" onclick="event.preventDefault(); if (confirm('Sei sicuro di voler eliminare questo utente?')) { document.getElementById('delete-form').submit(); }">
+                        <a class="px-3 py-2 rounded bg-danger text-white" href="{{ route('users.destroy', $user) }}" onclick="event.preventDefault(); if (confirm('Sei sicuro di voler eliminare questo utente?')) { document.getElementById('delete-form-{{$user->id}}').submit(); }">
                             <i class="fa-solid fa-trash"></i>
                         </a>
 
-                        <form id="delete-form" action="{{ route('users.destroy', $user) }}" method="POST" style="display: none;">
+                        <form id="delete-form-{{$user->id}}" action="{{ route('users.destroy', $user) }}" method="POST" style="display: none;">
                             @csrf
                             @method('DELETE')
                         </form>

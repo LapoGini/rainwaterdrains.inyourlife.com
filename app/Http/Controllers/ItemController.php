@@ -62,7 +62,6 @@ class ItemController extends Controller
     }
 
     public function createLinkPathFromImg_Item($item) {
-        $folderPath = Storage::disk('img_items')->path('');
         $linkPath = env('APP_URL') . '/img_items/' . date('Ymd', strtotime($item->time_stamp_pulizia)) . '/' . $item->pic;
         return $linkPath;
     }
@@ -137,10 +136,21 @@ class ItemController extends Controller
                 $item->calcolo_notturno,
                 $item->pic_link,
                 $item->note,
+                // colonna action
+                '<a href="'.route('items.edit', $item).'" class="px-3 py-2 rounded me-3 bg-black text-white"><i class="fas fa-pen-to-square"></i></a>
+                <a href="'.route('items.destroy', $item).'" class="px-3 py-2 rounded bg-danger text-white" onclick="event.preventDefault(); if (confirm(\'Sei sicuro di voler eliminare questo comune?\')) { document.getElementById(\'delete-form\').submit(); }">
+                    <i class="fa-solid fa-trash"></i>
+                </a>
+                <form id="delete-form" action="'.route('items.destroy', $item).'" method="POST" style="display: none;">
+                    @csrf
+                    @method(\'DELETE\')
+                </form>'
             ];
+
+            $row++;
         };
 
-        return response()->json(['data' => $caditoie]);
+        return response()->json(['data' => array_values($caditoie)]);
     }
 
     private function getItems(FilteredDataRequest $request) 
@@ -275,8 +285,11 @@ class ItemController extends Controller
             $groupedTagsType[$type] = $tags;
         }
 
+        $item->pic_link = $this->createLinkPathFromImg_Item($item);
+
         return view('pages.Items.edit', compact('item', 'items', 'clients', 'operators', 'streets', 'comuni', 'tags', 'itemsDate', 'tagTypes', 'groupedTags', 'groupedTagsType'));
     }
+
 
     public function update(ItemRequest $request, Item $item) : RedirectResponse
     {
@@ -290,8 +303,8 @@ class ItemController extends Controller
         
         $item->update($validated);
         
-        if(isset($validated['tagsIds'])){
-            $item->tags()->sync($validated['tagsIds']);
+        if(isset($validated['tags'])){
+            $item->tags()->sync($validated['tags']);
         }
 
         return to_route('items.index');
@@ -299,7 +312,6 @@ class ItemController extends Controller
 
     private function updateCancellabile($id)
     {
-        
         $item = Item::find($id);
         
         if (empty($item->cancellabile)) {

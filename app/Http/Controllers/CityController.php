@@ -71,7 +71,6 @@ class CityController extends Controller
 
     public function destroy(City $city) : RedirectResponse
     {
-        //$this->authorize('delete', $city);
         $city->delete();
         return to_route('cities.index');
     }

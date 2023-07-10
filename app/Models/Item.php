@@ -23,7 +23,8 @@ class Item extends Model
         'width', 
         'depth', 
         'pic', 
-        'note'];
+        'note'
+    ];
 
     public function street() {
         return $this->belongsTo(Street::class);
