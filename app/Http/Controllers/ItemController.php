@@ -16,6 +16,8 @@ use ZipArchive;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
+use Yajra\DataTables\DataTablesEditor;
+use Yajra\DataTables\DataTables;
 
 class ItemController extends Controller
 {
@@ -115,6 +117,7 @@ class ItemController extends Controller
                 }
             }
             $caditoie[$row] = [
+                $item->id,
                 $item->street->name,
                 $item->street->city->name,
                 $item->civic,
@@ -136,21 +139,28 @@ class ItemController extends Controller
                 $item->calcolo_notturno,
                 $item->pic_link,
                 $item->note,
-                // colonna action
-                '<a href="'.route('items.edit', $item).'" class="px-3 py-2 rounded me-3 bg-black text-white"><i class="fas fa-pen-to-square"></i></a>
-                <a href="'.route('items.destroy', $item).'" class="px-3 py-2 rounded bg-danger text-white" onclick="event.preventDefault(); if (confirm(\'Sei sicuro di voler eliminare questo comune?\')) { document.getElementById(\'delete-form\').submit(); }">
-                    <i class="fa-solid fa-trash"></i>
-                </a>
-                <form id="delete-form" action="'.route('items.destroy', $item).'" method="POST" style="display: none;">
-                    @csrf
-                    @method(\'DELETE\')
-                </form>'
             ];
 
             $row++;
         };
 
-        return response()->json(['data' => array_values($caditoie)]);
+        return DataTables::of($caditoie)
+        ->addIndexColumn()
+        ->addColumn('action', function($row) {
+            $actionBtn = 
+            '<a href="'.route('items.edit', $row).'" class="px-3 py-2 rounded me-3 bg-black text-white"><i class="fas fa-pen-to-square"></i></a>
+            <a href="'.route('items.destroy', $row).'" class="px-3 py-2 rounded bg-danger text-white" onclick="event.preventDefault(); if (confirm(\'Sei sicuro di voler eliminare questo comune?\')) { document.getElementById(\'delete-form\').submit(); }">
+                <i class="fa-solid fa-trash"></i>
+            </a>
+            <form id="delete-form" action="'.route('items.destroy', $row).'" method="POST" style="display: none;">
+                @csrf
+                @method(\'DELETE\')
+            </form>';
+
+            return $actionBtn;
+        })
+        ->rawColumns(['action'])
+        ->make(true);
     }
 
     private function getItems(FilteredDataRequest $request) 
@@ -167,8 +177,8 @@ class ItemController extends Controller
         $query = Item::with('street', 'street.city', 'tags', 'user');
 
         if ($clientId) {
-            $query->whereHas('user', function($query) use ($clientId) {
-                $query->where('id', $clientId);
+            $query->whereHas('street.city', function($query) use ($clientId) {
+                $query->where('user_id', $clientId);
             });
         }
 
@@ -209,12 +219,11 @@ class ItemController extends Controller
 
     public function createZipFileFromImg_Items(FilteredDataRequest $request) 
     {
-
         $items = $this->getItems($request);
 
         $zip = new ZipArchive;
 
-        $zipFileName = date('Ymdhis') . '.zip';
+        $zipFileName = '/downloads/' . time() . '.zip';
         
         $zipFilePath = Storage::disk('img_items')->path($zipFileName);
 
@@ -222,18 +231,13 @@ class ItemController extends Controller
             
             foreach ($items as $item) {
                 // Recupera la cartella corrispondente al giorno dell'immagine
-                $dateTime = Carbon::parse($item->time_stamp_pulizie);
-
+                $dateTime = date('Ymd', strtotime($item->time_stamp_pulizia));
                 $folderPath = Storage::disk('img_items')->path('');
 
                 // Recupera l'immagine
-                $imagePath = $folderPath . $item->id_da_app . '/';
-                
-                if (!Storage::disk('img_items')->exists($imagePath)) {
-                    $relativeNameInZipFile = $item->id_da_app . '.zip';
-
-                    $zip->addFile($imagePath, $relativeNameInZipFile);
-                }
+                $imagePath = $folderPath . $dateTime . '/';
+                $relativeNameInZipFile = $item->pic;
+                $zip->addFile($imagePath . $item->pic , $relativeNameInZipFile);
             }
             $zip->close();
             return $imagePath;
@@ -289,7 +293,6 @@ class ItemController extends Controller
 
         return view('pages.Items.edit', compact('item', 'items', 'clients', 'operators', 'streets', 'comuni', 'tags', 'itemsDate', 'tagTypes', 'groupedTags', 'groupedTagsType'));
     }
-
 
     public function update(ItemRequest $request, Item $item) : RedirectResponse
     {

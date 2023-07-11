@@ -118,6 +118,9 @@
         <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
             <tr>
                 <th scope="col" class="px-6 py-3">
+                    id
+                </th>
+                <th scope="col" class="px-6 py-3">
                     Comune
                 </th>
                 <th scope="col" class="px-6 py-3">
@@ -290,9 +293,26 @@
         $('#deletableButton').hide();
         hideDownloadButtons();
         $('#zanetti-table-download').DataTable({
-            "columnDefs": [
-                { "visible": false, "targets": [2, 5, 6, 7, 8, 9, 10, 13, 14, 15, 17, 18, 19] }
-            ],
+            processing: true,
+            serverSide: true,
+            ajax: {
+                url: "{{ route('items.filterData') }}",
+                data: function(d) { 
+                    d.clientId = $('#client').val();
+                    d.comuneId = $('#comune').val();
+                    d.streetId = $('#street').val();
+                    d.fromDateId = $('#fromDate').val();
+                    d.toDateId = $('#toDate').val();
+                    d.operatorId = $('#operator').val();
+                    d.selectedTags = [];
+                    $('input[name="tags[]"]:checked').each(function() {
+                        d.selectedTags.push($(this).val());
+                    });
+                },
+            },
+            //"columnDefs": [
+               // { "visible": false, "targets": [2, 5, 6, 7, 8, 9, 10, 13, 14, 15, 17, 18, 19] }
+            //],
             initComplete: function(setting, json) {
                 hideDownloadButtons();
                 hideDeletableButton();
@@ -325,7 +345,6 @@
         // button per eliminare caditoie cancellabili
         $('#deletableButton').on('click', function() {
             deleteSewers();
-
             $('#confirm-delete').show();
             // Nascondere il paragrafo
             setTimeout(function() {
