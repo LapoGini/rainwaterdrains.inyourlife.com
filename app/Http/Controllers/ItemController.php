@@ -60,7 +60,6 @@ class ItemController extends Controller
         }
 
         return $dataTable->render('pages.Items.index', compact('items', 'clients', 'operators', 'streets', 'comuni', 'tags', 'itemsDate', 'tagTypes', 'groupedTags', 'groupedTagsType'));
-        //return $dataTable->render('pages.items.index');
     }
 
     public function createLinkPathFromImg_Item($item) {
@@ -88,14 +87,14 @@ class ItemController extends Controller
         };
     }
 
-    public function filterData(FilteredDataRequest $request)
+    /*public function filterData(FilteredDataRequest $request)
     {
         $items = $this->getItems($request);
         $caditoie = [];
         $row=0;
 
         foreach($items as $item) {
-
+            //dd($item);
             $timeStamp = $item->time_stamp_pulizia;
             // per calcolare se è notturno
             $hour = (int) date('H', strtotime($timeStamp));
@@ -147,7 +146,7 @@ class ItemController extends Controller
                 <form id="delete-form-'.$item->id.'" action="'.route('items.destroy', $item->id).'" method="POST" style="display: none;">
                     @csrf
                     @method(\'DELETE\')
-                </form>'
+                </form>',''
                 
             ];
 
@@ -156,8 +155,8 @@ class ItemController extends Controller
 
         //QUI
         return DataTables::of($caditoie)
-        ->make(true /*, ['recordsTotal' => $this->getItems($request)['totalItemsCount'], 'recordsFiltered' => count($caditoie)]*/);
-    }
+        ->make(true);
+    }*/
 
     private function getItems(FilteredDataRequest $request) 
     {
@@ -213,7 +212,7 @@ class ItemController extends Controller
         $items = $query->orderBy('id', 'DESC')->get();
 
         //QUI
-        return ['items' => $items, /*'totalItemsCount' => $totalItemsCount*/];
+        return $items;
     }
 
     public function createZipFileFromImg_Items(FilteredDataRequest $request) 

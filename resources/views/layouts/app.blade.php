@@ -32,10 +32,10 @@
     <script src="//cdn.datatables.net/buttons/2.3.6/js/buttons.html5.min.js"></script>
     <script src="//cdn.datatables.net/buttons/2.3.6/js/buttons.print.min.js"></script>
     
-    <link rel="preload" as="style" href="https://geolocalizzazionezanetti.app/build/assets/app.e9ed2bd0.css">
-    <link rel="modulepreload" href="https://geolocalizzazionezanetti.app/build/assets/app.a032b13e.js">
-    <link rel="stylesheet" href="https://geolocalizzazionezanetti.app/build/assets/app.e9ed2bd0.css">
-    <script type="module" src="https://geolocalizzazionezanetti.app/build/assets/app.a032b13e.js"></script>
+    <link rel="preload" as="style" href="{{ env('APP_URL') }}/build/assets/app.e9ed2bd0.css">
+    <link rel="modulepreload" href="{{ env('APP_URL') }}/build/assets/app.a032b13e.js">
+    <link rel="stylesheet" href="{{ env('APP_URL') }}/build/assets/app.e9ed2bd0.css">
+    <script type="module" src="{{ env('APP_URL') }}/build/assets/app.a032b13e.js"></script>
 
     <!-- FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">

@@ -114,95 +114,16 @@
         <a id="downloadZip" class="btn btn-success">Scarica ZIP<i class="ps-2 fa-solid fa-file-zipper"></i></a>
     </div>
 
-    <table id="zanetti-table-download" class="table table-striped table-hover w-100 text-sm text-left text-gray-500 dark:text-gray-400">
-        <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
-            <tr>
-                <th scope="col" class="px-6 py-3">
-                    id
-                </th>
-                <th scope="col" class="px-6 py-3">
-                    Comune
-                </th>
-                <th scope="col" class="px-6 py-3">
-                    Provincia
-                </th>
-                <th scope="col" class="px-6 py-3">
-                    Civico
-                </th>
-                <th scope="col" class="px-6 py-3">
-                    Tipologia
-                </th>
-                <th scope="col" class="px-6 py-3">
-                    Stato
-                </th>
-                <th scope="col" class="px-6 py-3">
-                    Lunghezza
-                </th>
-                <th scope="col" class="px-6 py-3">
-                    Larghezza
-                </th>
-                <th scope="col" class="px-6 py-3">
-                    Profondità
-                </th>
-                <th scope="col" class="px-6 py-3">
-                    Volume (m3)
-                </th>
-                <th scope="col" class="px-6 py-3">
-                    Area (m2)
-                </th>
-                <th scope="col" class="px-6 py-3">
-                    Caditoie equiv.
-                </th>
-                <th scope="col" class="px-6 py-3">
-                    Recapito
-                </th>
-                <th scope="col" class="px-6 py-3">
-                    Data pulizia
-                </th>
-                <th scope="col" class="px-6 py-3">
-                    Latitudine
-                </th>
-                <th scope="col" class="px-6 py-3">
-                    Longitudine
-                </th>
-                <th scope="col" class="px-6 py-3">
-                    Altitudine
-                </th>
-                <th scope="col" class="px-6 py-3">
-                    Operatore
-                </th>
-                <th scope="col" class="px-6 py-3">
-                    Solo georef.
-                </th>
-                <th scope="col" class="px-6 py-3">
-                    Eseguite a mano in notturno
-                </th>
-                <th scope="col" class="px-6 py-3">
-                    Link fotografia 
-                </th>
-                <th scope="col" class="px-6 py-3">
-                    Note
-                </th>
-                <th scope="col" class="px-6 py-3">
-                    Azioni
-                </th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach($items as $key=>$item)
-                <tr className="border-b dark:bg-gray-800 dark:border-gray-700">
-                </tr>
-            @endforeach
-        </tbody>
-    </table>
+    {{ $dataTable->table() }}
 </div>
+{{ $dataTable->scripts() }}
 
 <script>
     $(document).ready(function() {
         $('.select2').select2();
         $('#deletableButton').hide();
         hideDownloadButtons();
-        $('#zanetti-table-download').DataTable({
+        /*$('#zanetti-table-download').DataTable({
             processing: true,
             serverSide: true,
             ajax: {
@@ -220,9 +141,7 @@
                     });
                 },
             },
-            //"columnDefs": [
-               // { "visible": false, "targets": [2, 5, 6, 7, 8, 9, 10, 13, 14, 15, 17, 18, 19] }
-            //],
+            //",
             initComplete: function(setting, json) {
                 hideDownloadButtons();
                 hideDeletableButton();
@@ -232,17 +151,8 @@
             language: {
                 url: '//cdn.datatables.net/plug-ins/1.13.4/i18n/it-IT.json',
             },
-            buttons: [
-                {
-                extend: 'csv',
-                text: 'DOWNLOAD CSV'
-                },
-                {
-                extend: 'excel',
-                text: 'DOWNLOAD XLSX'
-                }
-            ],
-        });
+            ,
+        });*/
         // Prendere i filtri all'invio del form
         $('form').submit(function(event) {
             event.preventDefault();

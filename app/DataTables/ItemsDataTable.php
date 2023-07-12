@@ -10,9 +10,13 @@ use Yajra\DataTables\Html\Button;
 use Yajra\DataTables\Html\Column;
 use Yajra\DataTables\Html\Editor\Editor;
 use Yajra\DataTables\Html\Editor\Fields;
+use Carbon\Carbon;
 use Yajra\DataTables\Services\DataTable;
 use App\Models\Street;
 use App\Models\Tag;
+use App\Models\City;
+use App\Models\User;
+
 
 class ItemsDataTable extends DataTable
 {
@@ -24,7 +28,7 @@ class ItemsDataTable extends DataTable
      */
     public function dataTable(QueryBuilder $query): EloquentDataTable
     {
-        $items = Item::with('street', 'street.city', 'tags', 'user')->orderBy('id', 'DESC')->paginate(50);
+        $items = Item::with('street', 'street.city', 'tags', 'user')->orderBy('id', 'DESC')->get();
         // TODO: caricare con ajax prima comuni, poi strade nel form di modifica
         $streets = Street::with('city')->get();
         $tags = Tag::where('domain', 'item')->get();
@@ -34,13 +38,22 @@ class ItemsDataTable extends DataTable
         foreach ($items as $item) {
             $itemTags = $item->tags;
 
+
+            ///// QUI PER VEDERE SE é NOTTURNO
+            $timeStamp = $item->time_stamp_pulizia;
+            $hour = (int) date('H', strtotime($timeStamp));
+            $item->calcolo_notturno = ($hour >= 20 || $hour < 6) ? 'si' : 'no';
+
+            //////////// QUI PER CREARE IL LINK ALLA FOTO
+            $item->pic_link = $this->createLinkPathFromImg_Item($item);
+
             foreach ($itemTags as $tag) {
                 $type = $tag->type;
                 $groupedTags[$item->id][$type][] = $tag;
             }
         }
 
-        /*return (new EloquentDataTable($query))
+        return (new EloquentDataTable($query))
             ->addColumn('action', function($item) {
                 $actionBtn = 
                 '<a href="'.route('items.edit', $item).'" class="px-3 py-2 rounded me-3 bg-black text-white"><i class="fas fa-pen-to-square"></i></a>
@@ -54,8 +67,71 @@ class ItemsDataTable extends DataTable
 
                 return $actionBtn;
             })
+            ->editColumn('comune', function($item) {
+                return $item->street->name;
+            })
+            ->editColumn('provincia', function($item) {
+                return $item->street->city->name;
+            })
+            ->editColumn('civico', function($item) {
+                return $item->civic ?? '';
+            })
+            ->editColumn('tipologia', function($item) {
+                return 'tipologia';
+            })
+            ->editColumn('stato', function($item) {
+                return 'stato';
+            })
+            ->editColumn('height', function($item) {
+                return $item->height;
+            })
+            ->editColumn('width', function($item) {
+                return $item->width;
+            })
+            ->editColumn('depth', function($item) {
+                return $item->depth;
+            })
+            ->editColumn('volume', function($item) {
+                return $item->height * $item->width * $item->depth;
+            })
+            ->editColumn('area', function($item) {
+                return $item->width * $item->depth;
+            })
+            ->editColumn('caditoie_equiv', function($item) {
+                return 'caditoie equiv.';
+            })
+            ->editColumn('recapito', function($item) {
+                return 'recapito';
+            })
+            ->editColumn('data_pulizia', function($item) {
+                return $item->time_stamp_pulizia;
+            })
+            ->editColumn('latitudine', function($item) {
+                return $item->latitude;
+            })
+            ->editColumn('longitudine', function($item) {
+                return $item->longitude;
+            })
+            ->editColumn('altitudine', function($item) {
+                return $item->altitude;
+            })
+            ->editColumn('operatore', function($item) {
+                return $item->user->name;
+            })
+            ->editColumn('solo_georef', function($item) {
+                return 'solo georef';
+            })
+            ->editColumn('eseguire_a_mano_in_notturno', function($item) {
+                return $item->calcolo_notturno;
+            })
+            ->editColumn('link_fotografia', function($item) {
+                return $item->pic_link;
+            })
+            ->editColumn('note', function($item) {
+                return $item->note;
+            })
             ->rawColumns(['action'])
-            ->setRowId('id');*/
+            ->setRowId('id');
     }
 
     /**
@@ -66,7 +142,54 @@ class ItemsDataTable extends DataTable
      */
     public function query(Item $model): QueryBuilder
     {
-        return $model->newQuery();
+        $query = $model->newQuery();
+
+        $clientId = $this->request()->input('clientId');
+        $comuneId = $this->request()->input('comuneId');
+        $streetId = $this->request()->input('streetId');
+        $fromDateId = $this->request()->input('fromDateId');
+        $toDateId = $this->request()->input('toDateId');
+        $operatorId = $this->request()->input('operatorId');
+        $selectedTags = $this->request()->input('tags');
+
+        if ($clientId) {
+            $query->whereHas('street.city', function ($query) use ($clientId) {
+                $query->where('user_id', $clientId);
+            });
+        }
+
+        if ($comuneId) {
+            $query->whereHas('street.city', function ($query) use ($comuneId) {
+                $query->where('id', $comuneId);
+            });
+        }
+
+        if ($streetId) {
+            $query->whereHas('street', function ($query) use ($streetId) {
+                $query->where('id', $streetId);
+            });
+        }
+
+        if ($fromDateId && $toDateId) {
+            $fromDateId = new Carbon($fromDateId);
+            $toDateId = new Carbon($toDateId);
+            $query->whereBetween('time_stamp_pulizia', [$fromDateId->startOfDay(), $toDateId->endOfDay()]);
+        }
+
+        if ($operatorId) {
+            $query->whereHas('user', function ($query) use ($operatorId) {
+                $query->where('id', $operatorId);
+            });
+        }
+
+        if ($selectedTags) {
+            $query->whereHas('tags', function ($query) use ($selectedTags) {
+                $query->whereIn('tags.id', $selectedTags);
+            });
+        }
+
+        return $query;
+
     }
 
     /**
@@ -77,16 +200,31 @@ class ItemsDataTable extends DataTable
     public function html(): HtmlBuilder
     {
         return $this->builder()
-                    ->setTableId('items-table') //inserire id tabella items (zanetti-table-download)
+                    ->setTableId('zanetti-table-download')
                     ->columns($this->getColumns())
                     ->minifiedAjax()
-                    //->dom('Bfrtip')
-                    ->orderBy(1)
+                    ->dom('Bfltip')
+                    ->orderBy(0)
                     ->selectStyleSingle()
-                    ->buttons([
-                        Button::make('excel'),
-                        Button::make('csv'),
-                    ]);
+                    ->parameters([
+                                    'serverSide' => true,
+                                    'processing' => true,
+                                    'language' => [
+                                        'url' => '//cdn.datatables.net/plug-ins/1.13.4/i18n/it-IT.json',
+                                    ],
+                                    'buttons' => [
+                                        ['extend' => 'csv', 'text' => 'DOWNLOAD CSV'],
+                                        ['extend' => 'excel', 'text' => 'DOWNLOAD XLSX'],
+                                    ],
+                                    /*'columnDefs' => [
+                                        ['visible' => false, 'targets' => [2, 5, 6, 7, 8, 9, 10, 13, 14, 15, 17, 18, 19]],
+                                    ],*/
+                                    'initComplete' => 'function() {
+                                        hideDownloadButtons();
+                                        hideDeletableButton();
+                                        hideZipButton();
+                                    }',
+                                ]);
     }
 
     /**
@@ -96,21 +234,53 @@ class ItemsDataTable extends DataTable
      */
     public function getColumns(): array
     {
-        $items = Item::with('street', 'street.city', 'tags', 'user')->orderBy('id', 'DESC')->paginate(50);
-        // TODO: caricare con ajax prima comuni, poi strade nel form di modifica
-        $streets = Street::with('city')->get();
-        $tags = Tag::where('domain', 'item')->get();
+        $clientId = $this->request()->input('clientId');
+        $comuneId = $this->request()->input('comuneId');
+        $streetId = $this->request()->input('streetId');
+        $fromDateId = $this->request()->input('fromDateId');
+        $toDateId = $this->request()->input('toDateId');
+        $operatorId = $this->request()->input('operatorId');
+        $selectedTags = $this->request()->input('tags');
 
-        $groupedTags = [];
+        $query = Item::with('street', 'street.city', 'tags', 'user')->orderBy('id', 'DESC');
 
-        foreach ($items as $item) {
-            $itemTags = $item->tags;
-
-            foreach ($itemTags as $tag) {
-                $type = $tag->type;
-                $groupedTags[$item->id][$type][] = $tag;
-            }
+        if ($clientId) {
+            $query->whereHas('street.city', function ($query) use ($clientId) {
+                $query->where('user_id', $clientId);
+            });
         }
+
+        if ($comuneId) {
+            $query->whereHas('street.city', function ($query) use ($comuneId) {
+                $query->where('id', $comuneId);
+            });
+        }
+
+        if ($streetId) {
+            $query->whereHas('street', function ($query) use ($streetId) {
+                $query->where('id', $streetId);
+            });
+        }
+
+        if ($fromDateId && $toDateId) {
+            $fromDateId = new Carbon($fromDateId);
+            $toDateId = new Carbon($toDateId);
+            $query->whereBetween('time_stamp_pulizia', [$fromDateId->startOfDay(), $toDateId->endOfDay()]);
+        }
+
+        if ($operatorId) {
+            $query->whereHas('user', function ($query) use ($operatorId) {
+                $query->where('id', $operatorId);
+            });
+        }
+
+        if ($selectedTags) {
+            $query->whereHas('tags', function ($query) use ($selectedTags) {
+                $query->whereIn('tags.id', $selectedTags);
+            });
+        }
+
+        $items = $query->get();
 
         return [
             Column::make('id'),
@@ -121,9 +291,9 @@ class ItemsDataTable extends DataTable
             Column::make('civic')->name('civico'),
             Column::make('tipologia')->name('tipologia'),
             Column::make('stato')->name('stato'),
-            Column::make('lunghezza')->name('lunghezza'),
-            Column::make('larghezza')->name('larghezza'),
-            Column::make('profondità')->name('profondità'),
+            Column::make('height')->name('lunghezza'),
+            Column::make('depth')->name('larghezza'),
+            Column::make('depth')->name('profondità'),
             Column::make('volume')->name('volume'),
             Column::make('area')->name('area'),
             Column::make('caditoie_equiv')->name('caditoie_equiv'),
@@ -137,14 +307,13 @@ class ItemsDataTable extends DataTable
             Column::make('eseguire_a_mano_in_notturno')->name('eseguire_a_mano_in_notturno'),
             Column::make('link_fotografia')->name('link_fotografia'),
             Column::make('note')->name('note'),
-            Column::make('azioni')->name('tipologia'),
 
             Column::computed('action')
                   ->exportable(false)
                   ->printable(false)
                   ->width(60)
                   ->addClass('text-center'),
-        ];
+        ];;
     }
 
     /**
@@ -155,5 +324,10 @@ class ItemsDataTable extends DataTable
     protected function filename(): string
     {
         return 'Items_' . date('YmdHis');
+    }
+
+    public function createLinkPathFromImg_Item($item) {
+        $linkPath = env('APP_URL') . '/img_items/' . date('Ymd', strtotime($item->time_stamp_pulizia)) . '/' . $item->pic;
+        return $linkPath;
     }
 }
