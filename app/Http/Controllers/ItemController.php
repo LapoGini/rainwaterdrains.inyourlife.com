@@ -116,6 +116,7 @@ class ItemController extends Controller
                     $pozzetto_nome = $tag->name;
                 }
             }
+
             $caditoie[$row] = [
                 $item->id,
                 $item->street->name,
@@ -139,28 +140,23 @@ class ItemController extends Controller
                 $item->calcolo_notturno,
                 $item->pic_link,
                 $item->note,
+                '<a href="'.route('items.edit', $item->id).'" class="px-3 py-2 rounded me-3 bg-black text-white"><i class="fas fa-pen-to-square"></i></a>
+                <a href="'.route('items.destroy', $item->id).'" class="px-3 py-2 rounded bg-danger text-white" onclick="event.preventDefault(); if (confirm(\'Sei sicuro di voler eliminare questo comune?\')) { document.getElementById(\'delete-form-'.$item->id.'\').submit(); }">
+                    <i class="fa-solid fa-trash"></i>
+                </a>
+                <form id="delete-form-'.$item->id.'" action="'.route('items.destroy', $item->id).'" method="POST" style="display: none;">
+                    @csrf
+                    @method(\'DELETE\')
+                </form>'
+                
             ];
 
             $row++;
         };
 
+        //QUI
         return DataTables::of($caditoie)
-        ->addIndexColumn()
-        ->addColumn('action', function($row) {
-            $actionBtn = 
-            '<a href="'.route('items.edit', $row).'" class="px-3 py-2 rounded me-3 bg-black text-white"><i class="fas fa-pen-to-square"></i></a>
-            <a href="'.route('items.destroy', $row).'" class="px-3 py-2 rounded bg-danger text-white" onclick="event.preventDefault(); if (confirm(\'Sei sicuro di voler eliminare questo comune?\')) { document.getElementById(\'delete-form\').submit(); }">
-                <i class="fa-solid fa-trash"></i>
-            </a>
-            <form id="delete-form" action="'.route('items.destroy', $row).'" method="POST" style="display: none;">
-                @csrf
-                @method(\'DELETE\')
-            </form>';
-
-            return $actionBtn;
-        })
-        ->rawColumns(['action'])
-        ->make(true);
+        ->make(true /*, ['recordsTotal' => $this->getItems($request)['totalItemsCount'], 'recordsFiltered' => count($caditoie)]*/);
     }
 
     private function getItems(FilteredDataRequest $request) 
@@ -175,6 +171,8 @@ class ItemController extends Controller
         $selectedTags = $request->input('tags');
 
         $query = Item::with('street', 'street.city', 'tags', 'user');
+        //QUI
+        //$totalItemsCount = $query->count();
 
         if ($clientId) {
             $query->whereHas('street.city', function($query) use ($clientId) {
@@ -214,7 +212,8 @@ class ItemController extends Controller
 
         $items = $query->orderBy('id', 'DESC')->get();
 
-        return $items;
+        //QUI
+        return ['items' => $items, /*'totalItemsCount' => $totalItemsCount*/];
     }
 
     public function createZipFileFromImg_Items(FilteredDataRequest $request) 
@@ -226,6 +225,10 @@ class ItemController extends Controller
         $zipFileName = '/downloads/' . time() . '.zip';
         
         $zipFilePath = Storage::disk('img_items')->path($zipFileName);
+
+        //QUI
+        //$visibleItemIds = $request->input('visibleItemIds');
+        //$items = $items->whereIn('id', $visibleItemIds->toArray());
 
         if ($zip->open($zipFilePath, ZipArchive::CREATE) === true) {
             

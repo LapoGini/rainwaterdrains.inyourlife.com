@@ -40,34 +40,22 @@ class ItemsDataTable extends DataTable
             }
         }
 
-        return (new EloquentDataTable($query))
-            ->addColumn('action', 'items.action')
-            ->addColumn('address', function ($item) {
-                return $item->street->name . ', ' . $item->street->city->name;
+        /*return (new EloquentDataTable($query))
+            ->addColumn('action', function($item) {
+                $actionBtn = 
+                '<a href="'.route('items.edit', $item).'" class="px-3 py-2 rounded me-3 bg-black text-white"><i class="fas fa-pen-to-square"></i></a>
+                <a href="'.route('items.destroy', $item).'" class="px-3 py-2 rounded bg-danger text-white" onclick="event.preventDefault(); if (confirm(\'Sei sicuro di voler eliminare questo comune?\')) { document.getElementById(\'delete-form-' . $item .'\').submit(); }">
+                    <i class="fa-solid fa-trash"></i>
+                </a>
+                <form id="delete-form-' . $item . '" action="'.route('items.destroy', $item).'" method="POST" style="display: none;">
+                    @csrf
+                    @method(\'DELETE\')
+                </form>';
+
+                return $actionBtn;
             })
-            ->addColumn('size', function ($item) {
-                return round($item->height) . 'L x ' . round($item->width) . 'S x ' . round($item->depth) . 'P';
-            })
-            ->addColumn('tags', function ($item) use ($groupedTags) {
-                $html = '';
-    
-                if (isset($groupedTags[$item->id])) {
-                    foreach ($groupedTags[$item->id] as $type => $tags) {
-                        $html .= '<p>';
-                        $html .= '<small class="font-bold mr-1">' . $type . ':</small>';
-                        
-                        foreach ($tags as $tag) {
-                            $html .= '<span class="bg-gray-100 text-gray-800 text-xs font-medium mr-2 px-2.5 py-0.5 rounded dark:bg-gray-700 dark:text-gray-300">' . $tag->name . '</span>';
-                        }
-                        $html .= '</p>';
-                    }
-                }
-                return $html;
-            })
-            ->addColumn('operator', function($item) {
-                return $item->user->name;
-            })
-            ->setRowId('id');
+            ->rawColumns(['action'])
+            ->setRowId('id');*/
     }
 
     /**
@@ -89,7 +77,7 @@ class ItemsDataTable extends DataTable
     public function html(): HtmlBuilder
     {
         return $this->builder()
-                    ->setTableId('items-table')
+                    ->setTableId('items-table') //inserire id tabella items (zanetti-table-download)
                     ->columns($this->getColumns())
                     ->minifiedAjax()
                     //->dom('Bfrtip')
@@ -128,10 +116,28 @@ class ItemsDataTable extends DataTable
             Column::make('id'),
 
             // mie colonne
-            Column::make('address')->name('Indirizzo'),
-            Column::make('size')->name('Dimensioni'),
-            Column::make('characteristics')->name('Caratteristiche'),
-            Column::make('operator')->name('Operatore'),
+            Column::make('comune')->name('comune'),
+            Column::make('provincia')->name('provincia'),
+            Column::make('civic')->name('civico'),
+            Column::make('tipologia')->name('tipologia'),
+            Column::make('stato')->name('stato'),
+            Column::make('lunghezza')->name('lunghezza'),
+            Column::make('larghezza')->name('larghezza'),
+            Column::make('profondità')->name('profondità'),
+            Column::make('volume')->name('volume'),
+            Column::make('area')->name('area'),
+            Column::make('caditoie_equiv')->name('caditoie_equiv'),
+            Column::make('recapito')->name('recapito'),
+            Column::make('data_pulizia')->name('data_pulizia'),
+            Column::make('latitudine')->name('latitudine'),
+            Column::make('longitudine')->name('longitudine'),
+            Column::make('altitudine')->name('altitudine'),
+            Column::make('operatore')->name('operatore'),
+            Column::make('solo_georef')->name('solo_georef'),
+            Column::make('eseguire_a_mano_in_notturno')->name('eseguire_a_mano_in_notturno'),
+            Column::make('link_fotografia')->name('link_fotografia'),
+            Column::make('note')->name('note'),
+            Column::make('azioni')->name('tipologia'),
 
             Column::computed('action')
                   ->exportable(false)
