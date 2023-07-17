@@ -7,7 +7,17 @@
     </h2>
 </div>
 
+
 <div class="w-75 p-5 m-auto">
+    <div class="pb-5">
+        <a href="{{ $prevItemId ? route('items.edit', $prevItemId) : '#' }}" class="prevNext btn d-inline-flex rounded align-items-center text-decoration-none fw-bold bg-primary text-light border-0 py-2 px-3{{ $prevItemId ? '' : ' disabled' }}">
+            Precedente
+        </a>
+        <a href="{{ $nextItemId ? route('items.edit', $nextItemId) : '#' }}" class="prevNext btn d-inline-flex rounded align-items-center text-decoration-none fw-bold bg-primary text-light border-0 py-2 px-3{{ $nextItemId ? '' : ' disabled' }}">
+            Successivo
+        </a>
+    </div>
+
     <div class="row">
         <div class="col-6">
             <form action="{{ route('items.update', $item) }}" method="POST">
@@ -156,10 +166,10 @@
             </form>
         </div>
         <div class="col-6">
-            <div class="img_caditoia">
+            <div class="img_caditoia mb-5">
                 <img src="{{ $item->pic_link }}" alt="">
             </div>
-            <div id="map"></div>
+            <div id="map" data-latitude="{{ $item->latitude }}" data-longitude="{{ $item->longitude }}" style="max-width: 100%; height: 300px"></div>
         </div>
     </div>
 </div>
@@ -167,8 +177,15 @@
 <script>
     $(document).ready(function() {
 
-        var latitude = {{ $item->latitude }};
-        var longitude = {{ $item->longitude }};
+        var latitude = $('#map').data('latitude');
+        var longitude = $('#map').data('longitude');
+
+
+        $('.prevNext').click(function(e) {
+            if ($(this).hasClass('disabled')) {
+                e.preventDefault();
+            }
+        });
 
         $('#comune').change(function() {
             var selectedComune = $(this).val();

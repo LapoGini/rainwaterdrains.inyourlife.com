@@ -18,10 +18,12 @@ use App\Models\City;
 use App\Models\User;
 use App\Http\Requests\FilteredDataRequest;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Session;
 use Yajra\DataTables\Datatables;
 
 class ItemsDataTable extends DataTable
 {
+
     /**
      * Build DataTable class.
      *
@@ -33,7 +35,7 @@ class ItemsDataTable extends DataTable
 
         $searchValue = $this->request->input('search.value');
 
-        return (new EloquentDataTable($query, $searchValue))
+        $dataTable = (new EloquentDataTable($query, $searchValue))
             ->addColumn('action', function($item) {
                 $actionBtn = 
                 '<a href="'.route('items.edit', $item).'" class="px-3 py-2 rounded me-3 bg-black text-white"><i class="fas fa-pen-to-square"></i></a>
@@ -110,6 +112,8 @@ class ItemsDataTable extends DataTable
             })
             ->rawColumns(['action'])
             ->setRowId('id');
+
+        return $dataTable;
     }
 
     /**
@@ -122,11 +126,6 @@ class ItemsDataTable extends DataTable
     {
 
         $query = $model->newQuery()->with(['street', 'street.city', 'tags', 'user']);
-
-        $searchValue = $this->request->input('search.value');
-
-        //dd($searchValue);
-
 
         $clientId = (isset($this->richiesta['client']) ? $this->richiesta['client'] : '');
         $comuneId = (isset($this->richiesta['comune']) ? $this->richiesta['comune'] : '');
@@ -188,7 +187,17 @@ class ItemsDataTable extends DataTable
             });
         }
 
+        $this->filteredItems = $query->pluck('id')->toArray();
+        Session::put('filteredItems', $this->filteredItems);
+
         return $query;
+    }
+
+    public $filteredItems = [];
+
+    public function getFilteredItems()
+    {
+        return $this->filteredItems;
     }
 
     /**
@@ -198,6 +207,8 @@ class ItemsDataTable extends DataTable
      */
     public function html(): HtmlBuilder
     {
+        $filteredItems = $this->filteredItems;
+
         return $this->builder()
                     ->setTableId('zanetti-table-download')
                     ->columns($this->getColumns())

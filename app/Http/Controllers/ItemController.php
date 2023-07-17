@@ -16,6 +16,7 @@ use ZipArchive;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Session;
 use Yajra\DataTables\DataTablesEditor;
 use Yajra\DataTables\DataTables;
 
@@ -53,7 +54,6 @@ class ItemController extends Controller
             $tags = Tag::where('domain', 'item')->where('type', $type)->get();
             $groupedTagsType[$type] = $tags;
         }
-
 
         return $dataTable->with('richiesta', $request->all())->render('pages.Items.index', compact('items', 'clients', 'operators', 'streets', 'comuni', 'tags', 'itemsDate', 'tagTypes', 'groupedTags', 'groupedTagsType'));
     }
@@ -181,9 +181,9 @@ class ItemController extends Controller
     //     return redirect(route('pages.items.index'));
     // }
 
-    public function edit(Item $item)
+    public function edit(ItemsDataTable $dataTable, Item $item)
     {
-        $items = Item::with('street', 'street.city', 'tags', 'user')->orderBy('id', 'DESC')->paginate(50);
+        $items = Item::with('street', 'street.city', 'tags', 'user')->orderBy('id', 'DESC')->get();
         $comuni = City::all();
 
         $strada_caditoia =  Street::find($item->street_id);
@@ -212,8 +212,24 @@ class ItemController extends Controller
 
         $item->pic_link = $this->createLinkPathFromImg_Item($item);
 
-        return view('pages.Items.edit', compact('item', 'items', 'clients', 'operators', 'streets', 'comuni', 'tags', 'itemsDate', 'tagTypes', 'groupedTags', 'groupedTagsType'));
+        $filteredItemsSession = Session::get('filteredItems');
+        $filteredItems = Item::with('street', 'street.city', 'tags', 'user')
+                ->whereIn('id', $filteredItemsSession)
+                ->orderBy('id', 'DESC')
+                ->get();
+
+        $prevItemId = null;
+        $nextItemId = null;
+        
+        $currentIndex = array_search($item->id, $filteredItemsSession);
+        if ($currentIndex !== false) {
+            $prevItemId = ($currentIndex > 0) ? $filteredItemsSession[$currentIndex - 1] : null;
+            $nextItemId = ($currentIndex < count($filteredItemsSession) - 1) ? $filteredItemsSession[$currentIndex + 1] : null;
+        }
+
+        return view('pages.Items.edit', compact('item', 'items', 'clients', 'operators', 'streets', 'comuni', 'tags', 'itemsDate', 'tagTypes', 'groupedTags', 'groupedTagsType', 'prevItemId', 'nextItemId'));
     }
+
 
     public function update(ItemRequest $request, Item $item) : RedirectResponse
     {

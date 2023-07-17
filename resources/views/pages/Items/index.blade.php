@@ -118,13 +118,14 @@
 </div>
 {{ $dataTable->scripts() }}
 
+
 <script>
     $(document).ready(function() {
         $('.select2').select2();
         $('#deletableButton').hide();
         hideDeletableButton();
         hideZipButton();
-       
+
         // Prendere i filtri all'invio del form
         $('form').submit(function(event) {
             event.preventDefault();
@@ -134,7 +135,6 @@
                 $('#deletableButton').show();
                 $('#downloadZip').show();
             }
-
         });
 
         // button per resettare i filtri
