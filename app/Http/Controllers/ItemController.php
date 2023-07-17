@@ -21,13 +21,14 @@ use Yajra\DataTables\DataTables;
 
 class ItemController extends Controller
 {
-    public function index(ItemsDataTable $dataTable) 
+    public function index(ItemsDataTable $dataTable, FilteredDataRequest $request) 
     {
+  
+        $items = Item::with('street', 'street.city', 'tags', 'user')->orderBy('id', 'DESC')->get();
 
         $selectedClient = request()->query('client');
         $selectedComune = request()->query('comune');
-        
-        $items = Item::with('street', 'street.city', 'tags', 'user')->orderBy('id', 'DESC')->paginate(50);
+
         $comuni = City::join('users', 'cities.user_id', '=', 'users.id')->where('users.id',  $selectedClient)->get();
         $streets = Street::join('cities', 'cities.id', '=', 'streets.city_id')->join('users', 'cities.user_id', '=', 'users.id')->where('users.id', $selectedComune)->select('streets.*')->get();
         $clients = User::join('role_user', 'users.id', '=', 'role_user.user_id')->join('roles', 'role_user.role_id', '=', 'roles.id')->where('roles.id', 3)->select('users.*')->get();
@@ -37,15 +38,9 @@ class ItemController extends Controller
 
         $tags = Tag::where('domain', 'item')->get();
         $groupedTags = [];
+        
         foreach ($items as $item) {
-            $timeStamp = $item->time_stamp_pulizia;
-            // per calcolare se è notturno
-            $hour = (int) date('H', strtotime($timeStamp));
-            $item->calcolo_notturno = ($hour >= 20 || $hour < 6) ? 'si' : 'no';
             $itemTags = $item->tags;
-
-            // per creare la path
-            $item->pic_link = $this->createLinkPathFromImg_Item($item);
 
             foreach ($itemTags as $tag) {
                 $type = $tag->type;
@@ -59,7 +54,8 @@ class ItemController extends Controller
             $groupedTagsType[$type] = $tags;
         }
 
-        return $dataTable->render('pages.Items.index', compact('items', 'clients', 'operators', 'streets', 'comuni', 'tags', 'itemsDate', 'tagTypes', 'groupedTags', 'groupedTagsType'));
+
+        return $dataTable->with('richiesta', $request->all())->render('pages.Items.index', compact('items', 'clients', 'operators', 'streets', 'comuni', 'tags', 'itemsDate', 'tagTypes', 'groupedTags', 'groupedTagsType'));
     }
 
     public function createLinkPathFromImg_Item($item) {
@@ -87,77 +83,6 @@ class ItemController extends Controller
         };
     }
 
-    /*public function filterData(FilteredDataRequest $request)
-    {
-        $items = $this->getItems($request);
-        $caditoie = [];
-        $row=0;
-
-        foreach($items as $item) {
-            //dd($item);
-            $timeStamp = $item->time_stamp_pulizia;
-            // per calcolare se è notturno
-            $hour = (int) date('H', strtotime($timeStamp));
-            $item->calcolo_notturno = ($hour >= 20 || $hour < 6) ? 'si' : 'no';
-
-            $item->pic_link = $this->createLinkPathFromImg_Item($item);
-
-            $pozzetto_nome = null;
-            $stato_nome = null;
-            $recapito_nome = null;
-            
-            foreach ($item->tags()->get() as $tag) {
-                if ($tag->type == 'Stato') {
-                    $stato_nome = $tag->name;
-                } else if ($tag->type == 'Recapito') {
-                    $recapito_nome = $tag->name;
-                } else if ($tag->type == 'Tipo Pozzetto') {
-                    $pozzetto_nome = $tag->name;
-                }
-            }
-
-            $caditoie[$row] = [
-                $item->id,
-                $item->street->name,
-                $item->street->city->name,
-                $item->civic,
-                $pozzetto_nome,
-                $stato_nome,
-                $item->height,
-                $item->width,
-                $item->depth,
-                $item->height * $item->width * $item->depth,
-                $item->width * $item->depth,
-                $item->caditoie_equiv,
-                $recapito_nome,
-                $item->time_stamp_pulizia,
-                $item->latitude,
-                $item->longitude,
-                $item->altitude,
-                $item->user->name,
-                'solo georef.',
-                $item->calcolo_notturno,
-                $item->pic_link,
-                $item->note,
-                '<a href="'.route('items.edit', $item->id).'" class="px-3 py-2 rounded me-3 bg-black text-white"><i class="fas fa-pen-to-square"></i></a>
-                <a href="'.route('items.destroy', $item->id).'" class="px-3 py-2 rounded bg-danger text-white" onclick="event.preventDefault(); if (confirm(\'Sei sicuro di voler eliminare questo comune?\')) { document.getElementById(\'delete-form-'.$item->id.'\').submit(); }">
-                    <i class="fa-solid fa-trash"></i>
-                </a>
-                <form id="delete-form-'.$item->id.'" action="'.route('items.destroy', $item->id).'" method="POST" style="display: none;">
-                    @csrf
-                    @method(\'DELETE\')
-                </form>',''
-                
-            ];
-
-            $row++;
-        };
-
-        //QUI
-        return DataTables::of($caditoie)
-        ->make(true);
-    }*/
-
     private function getItems(FilteredDataRequest $request) 
     {
 
@@ -170,8 +95,6 @@ class ItemController extends Controller
         $selectedTags = $request->input('tags');
 
         $query = Item::with('street', 'street.city', 'tags', 'user');
-        //QUI
-        //$totalItemsCount = $query->count();
 
         if ($clientId) {
             $query->whereHas('street.city', function($query) use ($clientId) {
@@ -224,10 +147,6 @@ class ItemController extends Controller
         $zipFileName = '/downloads/' . time() . '.zip';
         
         $zipFilePath = Storage::disk('img_items')->path($zipFileName);
-
-        //QUI
-        //$visibleItemIds = $request->input('visibleItemIds');
-        //$items = $items->whereIn('id', $visibleItemIds->toArray());
 
         if ($zip->open($zipFilePath, ZipArchive::CREATE) === true) {
             

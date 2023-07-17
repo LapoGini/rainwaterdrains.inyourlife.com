@@ -159,13 +159,17 @@
             <div class="img_caditoia">
                 <img src="{{ $item->pic_link }}" alt="">
             </div>
-
+            <div id="map"></div>
         </div>
     </div>
 </div>
 
 <script>
     $(document).ready(function() {
+
+        var latitude = {{ $item->latitude }};
+        var longitude = {{ $item->longitude }};
+
         $('#comune').change(function() {
             var selectedComune = $(this).val();
             $('#street').val('');
@@ -180,6 +184,21 @@
                 }
             });
         });
+        function initMap(latitude, longitude) {
+            var latLng = {lat: latitude, lng:  longitude};
+
+            var map = new google.maps.Map(document.getElementById('map'), {
+                center: latLng,
+                zoom: 8
+            });
+
+            // Aggiungere marker per la posizione
+            var marker = new google.maps.Marker({
+                position: latLng,
+                map: map
+            });
+        }
+        initMap(latitude, longitude);
     });
 </script>
 

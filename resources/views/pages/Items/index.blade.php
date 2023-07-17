@@ -122,42 +122,21 @@
     $(document).ready(function() {
         $('.select2').select2();
         $('#deletableButton').hide();
-        hideDownloadButtons();
-        /*$('#zanetti-table-download').DataTable({
-            processing: true,
-            serverSide: true,
-            ajax: {
-                url: "{{ route('items.filterData') }}",
-                data: function(d) { 
-                    d.clientId = $('#client').val();
-                    d.comuneId = $('#comune').val();
-                    d.streetId = $('#street').val();
-                    d.fromDateId = $('#fromDate').val();
-                    d.toDateId = $('#toDate').val();
-                    d.operatorId = $('#operator').val();
-                    d.selectedTags = [];
-                    $('input[name="tags[]"]:checked').each(function() {
-                        d.selectedTags.push($(this).val());
-                    });
-                },
-            },
-            //",
-            initComplete: function(setting, json) {
-                hideDownloadButtons();
-                hideDeletableButton();
-                hideZipButton();
-            },
-            dom: 'Bfltip',
-            language: {
-                url: '//cdn.datatables.net/plug-ins/1.13.4/i18n/it-IT.json',
-            },
-            ,
-        });*/
+        hideDeletableButton();
+        hideZipButton();
+       
         // Prendere i filtri all'invio del form
         $('form').submit(function(event) {
             event.preventDefault();
-            applyFilters();
+            window.LaravelDataTables["zanetti-table-download"].ajax.url( '/items?' + $(this).serialize()).load();
+            if($("#client").val() !== "") {
+                $(".buttons-csv, .buttons-excel").show();
+                $('#deletableButton').show();
+                $('#downloadZip').show();
+            }
+
         });
+
         // button per resettare i filtri
         $('#resetButton').on('click', function() {
             resetFilters();
@@ -236,7 +215,17 @@
         function showDeletableButton() {
             $('#deletableButton').show();
         }
-
+        // Funzione per resettare i filtri
+        function resetFilters() {
+            window.LaravelDataTables["zanetti-table-download"].ajax.url( '/items').load();
+            $('#fromDate, #toDate').val('');
+            $('#client, #comune, #street, #operator').val('').trigger('change.select2');
+            $('input[name="tags[]"]').prop('checked', false);
+            $('#deletableButton').hide();
+            hideDownloadButtons();
+            hideDeletableButton();
+            hideZipButton();
+        }
         // funzione per Zippare le immagini filtrate
         function downloadZip() {
             var clientId = $('#client').val();
@@ -271,62 +260,10 @@
                 }
             });
         }
-        // funzione per applicare i filtri
-        function applyFilters() {
-            var clientId = $('#client').val();
-            var comuneId = $('#comune').val();
-            var streetId = $('#street').val();
-            var fromDateId = $('#fromDate').val();
-            var toDateId = $('#toDate').val();
-            var operatorId = $('#operator').val();
-            var selectedTags = [];
-            $('input[name="tags[]"]:checked').each(function() {
-                selectedTags.push($(this).val());
-            });
-            $.ajax({
-                url: "{{ route('items.filterData') }}",
-                method: "GET",
-                data: {
-                    clientId: clientId,
-                    comuneId: comuneId,
-                    streetId: streetId,
-                    fromDateId: fromDateId,
-                    toDateId: toDateId,
-                    operatorId: operatorId,
-                    tags: selectedTags,
-                },
-                success: function(response) {
-                    var table = $('#zanetti-table-download').DataTable();
-                    table.clear().rows.add(response.data).draw(); // Aggiornare la tabella con i nuovi dati filtrati
-                    $('#deletableButton').show();
-                    if ($('#client').val() === '') {
-                        hideDownloadButtons();
-                        hideDeletableButton();
-                        hideZipButton();
-                    } else {
-                        showDownloadButtons();
-                        showDeletableButton();
-                        showZipButton();
-                    }
-                },
-                error: function(xhr, status, error) {
-                    console.error(error);
-                }
-            });
-        }
-        // Funzione per resettare i filtri
-        function resetFilters() {
-            $('#fromDate, #toDate').val('');
-            $('#client, #comune, #street, #operator').val('').trigger('change.select2');
-            $('input[name="tags[]"]').prop('checked', false);
-            $('#deletableButton').hide();
-            hideDownloadButtons();
-            hideDeletableButton();
-            hideZipButton();
-            applyFilters();
-        }
+       
+        
         // Funzione per rendere cancellabili le caditoie
-        function deleteSewers() {
+        /*function deleteSewers() {
             var clientId = $('#client').val();
             var comuneId = $('#comune').val();
             var streetId = $('#street').val();
@@ -340,7 +277,7 @@
             let text = "Sei sicuro di voler eliminare le caditoie?\nScegli Ok o Annulla.";
             if (confirm(text)) {
                 $.ajax({
-                url: "{{ route('items.filterData') }}",
+                url: ,
                 method: "GET",
                 data: { 
                     clientId: clientId,
@@ -364,7 +301,7 @@
                 text = "Le Caditoie non verranno eliminate!";
             }
             document.getElementById("confirm-delete").innerHTML = text;
-        }
+        }*/
     });
 </script>
 
