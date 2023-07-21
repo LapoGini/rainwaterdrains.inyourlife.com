@@ -55,6 +55,7 @@ class ItemController extends Controller
             $groupedTagsType[$type] = $tags;
         }
 
+
         return $dataTable->with('richiesta', $request->all())->render('pages.Items.index', compact('items', 'clients', 'operators', 'streets', 'comuni', 'tags', 'itemsDate', 'tagTypes', 'groupedTags', 'groupedTagsType'));
     }
 
@@ -83,7 +84,7 @@ class ItemController extends Controller
         };
     }
 
-    private function getItems(FilteredDataRequest $request) 
+    /*private function getItems(FilteredDataRequest $request) 
     {
 
         $clientId = $request->input('clientId');
@@ -136,11 +137,19 @@ class ItemController extends Controller
 
         //QUI
         return $items;
-    }
+    }*/
 
-    public function createZipFileFromImg_Items(FilteredDataRequest $request) 
+    public function createZipFileFromImg_Items() 
     {
-        $items = $this->getItems($request);
+
+        $ret['success'] = false;
+        $ret['data'] = [];
+
+        $items =  $filteredItemsSession = Session::get('filteredItems');
+        $filteredItems = Item::with('street', 'street.city', 'tags', 'user')
+                ->whereIn('id', $filteredItemsSession)
+                ->orderBy('id', 'DESC')
+                ->get();
 
         $zip = new ZipArchive;
 
@@ -149,8 +158,8 @@ class ItemController extends Controller
         $zipFilePath = Storage::disk('img_items')->path($zipFileName);
 
         if ($zip->open($zipFilePath, ZipArchive::CREATE) === true) {
-            
-            foreach ($items as $item) {
+            foreach ($filteredItems as $item) {
+
                 // Recupera la cartella corrispondente al giorno dell'immagine
                 $dateTime = date('Ymd', strtotime($item->time_stamp_pulizia));
                 $folderPath = Storage::disk('img_items')->path('');
@@ -158,13 +167,62 @@ class ItemController extends Controller
                 // Recupera l'immagine
                 $imagePath = $folderPath . $dateTime . '/';
                 $relativeNameInZipFile = $item->pic;
-                $zip->addFile($imagePath . $item->pic , $relativeNameInZipFile);
+
+                //qua il controllo sull'immagine
+                if (file_exists($imagePath . $item->pic)) {
+                    $zip->addFile($imagePath . $item->pic, $relativeNameInZipFile);
+                } else {
+                    $ret['data'][] = $relativeNameInZipFile;
+                }
             }
             $zip->close();
-            return $imagePath;
+            if(!empty($ret['data'])) {
+                $ret['success'] = false;
+                $ret['message'] = 'Immagini non trovate!';
+            } else {
+                $ret['success'] = true;
+                $ret['message'] =  'File Zip generato con successo';
+                $ret['data'] = base64_encode(file_get_contents($zipFilePath));
+            }
+        } else {
+            $ret['message'] = 'Impossibile creare il file Zip';
         }
-        return null;
+        return json_encode($ret);
     }
+
+    public function deleteSewers()
+    {
+        $ret['success'] = false;
+
+        $ret['data']['cancellabile'] = [];
+        $ret['data']['non_cancellabile'] = [];
+        
+        $ids = [];
+
+        $ids = Session::get('filteredItems');
+
+        $items = Item::whereIn('id', $ids)->get();
+
+        foreach($items as $item) {
+            if ($item->cancellabile == null) {
+                $item->cancellabile = Carbon::now()->setTimezone('Europe/Rome');
+                $item->save();
+                $ret['data']['cancellabile'][] = $item->id;
+            } else {
+                $ret['data']['non_cancellabile'][] = $item->id;
+            }
+        }
+        
+        if (!empty($ret['data']['cancellabile'])) {
+            $ret['success'] = true;
+            $ret['message'] = 'Hai reso cancellabili alcune caditoie!';
+        } else {
+            $ret['message'] = 'Impossibile rendere cancellabili alcune caditoie!';
+        }
+        
+        return json_encode($ret);
+    }
+
 
 
     // public function store(ItemRequest $request) : RedirectResponse
@@ -248,18 +306,6 @@ class ItemController extends Controller
         }
 
         return to_route('items.index');
-    }
-
-    private function updateCancellabile($id)
-    {
-        $item = Item::find($id);
-        
-        if (empty($item->cancellabile)) {
-            $item->cancellabile = Carbon::now()->setTimezone('Europe/Rome');
-            return $item->save();
-        }
-
-        return false;
     }
 
     public function destroy(Item $item) : RedirectResponse

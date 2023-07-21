@@ -41,8 +41,8 @@ class TagController extends Controller
 
     public function getTipiPozzetto() 
     {
-        $tags = Tag::where('type', 'Tipo Pozzetto' )->select('id as tipopozzetto_id','name as pozzetto_nome')->get();
+        $tags = Tag::where('type', 'Tipologia' )->select('id as tipopozzetto_id','name as pozzetto_nome')->get();
 
-        return Functions::setResponse($tags, 'Nessun Tipo Pozzetto Trovato');
+        return Functions::setResponse($tags, 'Nessun Tipologia Trovato');
     }
 }

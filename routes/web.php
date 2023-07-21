@@ -40,6 +40,7 @@ Route::get('items/street/{city_id}', [ItemController::class, 'getHtmlStreetByCit
 Route::get('/download-zip', [ItemController::class, 'createZipFileFromImg_Items'])->name('items.downloadZip')->middleware(['auth', 'verified', 'role:admin']);
 Route::get('/items/{item}/edit/previous', [ItemController::class, 'previous'])->name('items.previous')->middleware(['auth', 'verified', 'role:admin']);
 Route::get('/items/{item}/edit/next', [ItemController::class, 'next'])->name('items.next')->middleware(['auth', 'verified', 'role:admin']);
+Route::get('/items/deletable', [ItemController::class, 'deleteSewers'])->name('items.deleteSewers')->middleware(['auth', 'verified', 'role:admin']);
 
 
 Route::middleware('auth')->group(function () {

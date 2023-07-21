@@ -96,7 +96,6 @@
                     <button id="deletableButton" type="submit" class="rounded text-decoration-none fw-bold bg-danger text-light border-0 py-2 px-3">
                         ELIMINA DATI FILTRATI DA TELEFONO
                     </button>
-                    <p id="confirm-delete" class="fw-light fst-italic"></p>
                 </div>
                 <div class="col-6 filter-buttons text-end">
                     <button id="filterButton" type="submit" class="rounded text-decoration-none fw-bold bg-primary text-light border-0 py-2 px-3">
@@ -112,6 +111,69 @@
 
     <div class="button-zip text-end">
         <a id="downloadZip" class="btn btn-success">Scarica ZIP<i class="ps-2 fa-solid fa-file-zipper"></i></a>
+    </div>
+    <div class="modal fade" id="modalErrore" tabindex="-1" aria-labelledby="modalErroreLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content border-danger border-3">
+                <div class="modal-header">
+                    <h1 class="modal-title text-danger fs-5" id="modalErroreLabel">Errore: Immagini non trovate</h1>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    Non sono state trovate immagini nel percorso specificato!
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Chiudi</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade" id="modalSuccess" tabindex="-1" aria-labelledby="modalErroreLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content border-success border-3">
+                <div class="modal-header">
+                    <h1 class="modal-title fs-5" id="modalErroreLabel">Immagini trovate con successo!</h1>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    Per scaricare il File Zip clicca su <span class="text-decoration-underline">Apri file</span>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Chiudi</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade" id="modalDeleteErrore" tabindex="-1" aria-labelledby="modalErroreLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content border-danger border-3">
+                <div class="modal-header">
+                    <h1 class="modal-title text-danger fs-5" id="modalErroreLabel">Caditoie non cancellabili!</h1>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    Nessuna caditoia può essere resa cancellabile!
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Chiudi</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade" id="modalDeleteSuccess" tabindex="-1" aria-labelledby="modalErroreLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content border-success border-3">
+                <div class="modal-header">
+                    <h1 class="modal-title fs-5" id="modalErroreLabel">Caditoie cancellabili!</h1>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Chiudi</button>
+                </div>
+            </div>
+        </div>
     </div>
 
     {{ $dataTable->table() }}
@@ -144,11 +206,6 @@
         // button per eliminare caditoie cancellabili
         $('#deletableButton').on('click', function() {
             deleteSewers();
-            $('#confirm-delete').show();
-            // Nascondere il paragrafo
-            setTimeout(function() {
-                $('#confirm-delete').hide();
-            }, 5000);
         })
         // button per Zip
         $('#downloadZip').on('click', function() {
@@ -226,6 +283,18 @@
             hideDeletableButton();
             hideZipButton();
         }
+        function downloadFileZip(filename, data) {
+            var element = document.createElement('a');
+            element.setAttribute('href', 'data:application/zip;base64,' + data);
+            element.setAttribute('download', filename);
+
+            element.style.display = 'none';
+            document.body.appendChild(element);
+
+            element.click();
+
+            document.body.removeChild(element);
+        }
         // funzione per Zippare le immagini filtrate
         function downloadZip() {
             var clientId = $('#client').val();
@@ -252,8 +321,17 @@
                 },
                 success: function(response) {
                     console.log(response);
-                    // Avvia il download del file ZIP
-                    //window.location.href = response;
+                    var risposta = JSON.parse(response);
+                    var modalErrore = $('#modalErrore');
+                    var modalSuccess = $('#modalSuccess');
+
+                    if (risposta.success == false) {
+                        modalErrore.modal('show');
+                    } else {
+                        var filename = 'immagini_' + fromDateId + '_' + toDateId + '_' + '.zip';
+                        downloadFileZip(filename, risposta.data);
+                        modalSuccess.modal('show');
+                    }
                 },
                 error: function(xhr, status, error) {
                     console.error(error);
@@ -263,45 +341,36 @@
        
         
         // Funzione per rendere cancellabili le caditoie
-        /*function deleteSewers() {
-            var clientId = $('#client').val();
-            var comuneId = $('#comune').val();
-            var streetId = $('#street').val();
-            var fromDateId = $('#fromDate').val();
-            var toDateId = $('#toDate').val();
-            var operatorId = $('#operator').val();
-            var selectedTags = [];
-            $('input[name="tags[]"]:checked').each(function() {
-                selectedTags.push($(this).val());
-            });
+        function deleteSewers() {
             let text = "Sei sicuro di voler eliminare le caditoie?\nScegli Ok o Annulla.";
             if (confirm(text)) {
                 $.ajax({
-                url: ,
+                url: "{{ route('items.deleteSewers') }}",
                 method: "GET",
-                data: { 
-                    clientId: clientId,
-                    comuneId: comuneId,
-                    streetId: streetId,
-                    fromDateId: fromDateId,
-                    toDateId: toDateId,
-                    operatorId: operatorId,
-                    tags: selectedTags,
-                    itemCancellabile: true,
-                  },
                     success: function(response) {
-                        text = "Hai reso cancellabili le caditoie!";
-                        document.getElementById("confirm-delete").innerHTML = text;
+                        console.log(response);
+                        var risposta = JSON.parse(response);
+                        var modalErrore = $('#modalDeleteErrore');
+                        var modalSuccess = $('#modalDeleteSuccess');
+
+                        if(risposta.success == false) {
+                            modalErrore.modal('show');
+                        } else {
+                            modalSuccess.find('.modal-body span').text(risposta.data.cancellabile.length);
+                            if (risposta.data.non_cancellabile.length === 0) {
+                                modalSuccess.find('.modal-body').html('Tutte le caditoie sono cancellabili!');
+                            } else {
+                                modalSuccess.find('.modal-body').html('Hai reso cancellabili ' + risposta.data.cancellabile.length + ' caditoie, eccetto ' + risposta.data.non_cancellabile.length + ' caditoie!');
+                            }
+                            modalSuccess.modal('show');
+                        }
                     },
                     error: function(xhr, status, error) {
                         console.error(error);
                     }
                 })
-            } else {
-                text = "Le Caditoie non verranno eliminate!";
             }
-            document.getElementById("confirm-delete").innerHTML = text;
-        }*/
+        }
     });
 </script>
 

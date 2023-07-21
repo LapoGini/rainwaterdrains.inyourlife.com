@@ -2,7 +2,7 @@
 
 namespace App\DataTables;
 
-use App\Models\Item;
+use App\Models\ItemDataTableView;
 use Illuminate\Database\Eloquent\Builder as QueryBuilder;
 use Yajra\DataTables\EloquentDataTable;
 use Yajra\DataTables\Html\Builder as HtmlBuilder;
@@ -24,6 +24,16 @@ use Yajra\DataTables\Datatables;
 class ItemsDataTable extends DataTable
 {
 
+    public $filteredItems = [];
+
+    protected $allTagTypes;
+
+    public function __construct()
+    {
+        parent::__construct();
+        $this->allTagTypes = DB::table('tags')->distinct()->pluck('type')->toArray();
+    }
+
     /**
      * Build DataTable class.
      *
@@ -35,48 +45,23 @@ class ItemsDataTable extends DataTable
 
         $searchValue = $this->request->input('search.value');
 
+
         $dataTable = (new EloquentDataTable($query, $searchValue))
             ->addColumn('action', function($item) {
+                $editUrl = url('items/' . $item->id . '/edit');
+                $deleteUrl = url('items/' . $item->id);
+            
                 $actionBtn = 
-                '<a href="'.route('items.edit', $item).'" class="px-3 py-2 rounded me-3 bg-black text-white"><i class="fas fa-pen-to-square"></i></a>
-                <a href="'.route('items.destroy', $item).'" class="px-3 py-2 rounded bg-danger text-white" onclick="event.preventDefault(); if (confirm(\'Sei sicuro di voler eliminare questo comune?\')) { document.getElementById(\'delete-form-' . $item .'\').submit(); }">
+                '<a href="' . $editUrl . '" class="px-3 py-2 rounded me-3 bg-black text-white"><i class="fas fa-pen-to-square"></i></a>
+                <a href="' . $deleteUrl . '" class="px-3 py-2 rounded bg-danger text-white" onclick="event.preventDefault(); if (confirm(\'Sei sicuro di voler eliminare questo comune?\')) { document.getElementById(\'delete-form-' . $item->id .'\').submit(); }">
                     <i class="fa-solid fa-trash"></i>
                 </a>
-                <form id="delete-form-' . $item . '" action="'.route('items.destroy', $item).'" method="POST" style="display: none;">
+                <form id="delete-form-' . $item->id . '" action="' . $deleteUrl . '" method="POST" style="display: none;">
                     @csrf
                     @method(\'DELETE\')
                 </form>';
-
+            
                 return $actionBtn;
-            })
-            ->editColumn('tipologia', function($item) {
-                $results = DB::select("
-                    SELECT tags.name
-                    FROM tags
-                    JOIN item_tag ON tags.id = item_tag.tag_id
-                    WHERE tags.type = 'Tipo Pozzetto'
-                    AND item_tag.item_id = $item->id
-                ");
-
-                return !empty($results) ? $results[0]->name : '';
-            })
-            ->orderColumn('tipologia', function ($query, $order) {
-                $query->select('tags.name as tipologia')
-                    ->from('tags')
-                    ->join('item_tag', 'tags.id', '=', 'item_tag.tag_id')
-                    ->join('items', 'item_tag.item_id', '=', 'items.id')
-                    ->where('tags.type', 'Tipo Pozzetto')
-                    ->orderBy('tipologia', $order);
-            })
-            ->editColumn('stato', function($item) {
-                $tipologia_nome = null;
-                foreach ($item->tags()->get() as $tag) {
-                    if ($tag->type == 'Stato') {
-                        $tipologia_nome = $tag->name;
-                        break;
-                    }
-                }
-                return $tipologia_nome;
             })
             ->editColumn('volume', function($item) {
                 return $item->height * $item->width * $item->depth;
@@ -87,16 +72,7 @@ class ItemsDataTable extends DataTable
             ->editColumn('caditoie_equiv', function($item) {
                 return 'caditoie equiv.';
             })
-            ->editColumn('recapito', function($item) {
-                $tipologia_nome = null;
-                foreach ($item->tags()->get() as $tag) {
-                    if ($tag->type == 'Recapito') {
-                        $tipologia_nome = $tag->name;
-                        break;
-                    }
-                }
-                return $tipologia_nome;
-            })
+            
             ->editColumn('solo_georef', function($item) {
                 return 'solo georef';
             })
@@ -122,10 +98,13 @@ class ItemsDataTable extends DataTable
      * @param \App\Models\Item $model
      * @return \Illuminate\Database\Eloquent\Builder
      */
-    public function query(Item $model): QueryBuilder
+    public function query(ItemDataTableView $model): QueryBuilder
     {
 
-        $query = $model->newQuery()->with(['street', 'street.city', 'tags', 'user']);
+        $searchValue = $this->request->input('search.value');
+
+        $query = $model->newQuery()
+                ->with(['street', 'street.city', 'user']);
 
         $clientId = (isset($this->richiesta['client']) ? $this->richiesta['client'] : '');
         $comuneId = (isset($this->richiesta['comune']) ? $this->richiesta['comune'] : '');
@@ -134,22 +113,7 @@ class ItemsDataTable extends DataTable
         $toDateId = (isset($this->richiesta['toDate']) ? $this->richiesta['toDate'] : '');
         $operatorId = (isset($this->richiesta['operator']) ? $this->richiesta['operator'] : '');
         $selectedTags = (isset($this->richiesta['tags']) ? $this->richiesta['tags'] : '');
-
-        /*if ($searchValue) {
-            $results = DB::select("
-                SELECT streets.name, cities.name, tags.name, items.time_stamp_pulizia, roles.name, items.note
-                FROM items
-                JOIN streets ON items.street_id = streets.id
-                JOIN cities ON streets.city_id = cities.id
-                JOIN item_tag ON items.id = item_tag.item_id
-                JOIN tags ON item_tag.tag_id = tags.id
-                JOIN users ON items.user_id = users.id
-                JOIN role_user ON users.id = role_user.user_id
-                JOIN roles ON role_user.role_id = roles.id
-                WHERE (streets.name LIKE '%" . $searchValue . "%' OR cities.name LIKE '%" . $searchValue . "%' OR tags.name LIKE '%" . $searchValue . "%' OR items.time_stamp_pulizia LIKE '%" . $searchValue . "%' OR roles.name LIKE '%" . $searchValue . "%' OR items.note LIKE '%" . $searchValue . "%')
-                AND items.street_id = streets.id
-            ");
-        }*/
+        
         
         if ($clientId) {
             $query->whereHas('street.city', function ($query) use ($clientId) {
@@ -181,23 +145,33 @@ class ItemsDataTable extends DataTable
             });
         }
 
-        if ($selectedTags) {
-            $query->whereHas('tags', function ($query) use ($selectedTags) {
-                $query->whereIn('tags.id', $selectedTags);
+        $allTagTypes = DB::table('tags')->distinct()->pluck('type')->toArray();
+
+        
+        if($searchValue) {
+            $query->where(function ($query) use ($searchValue) {
+                $query->where('street_nome', 'LIKE', '%' . $searchValue . '%')
+                      ->orWhere('city_nome', 'LIKE', '%' . $searchValue . '%')
+                      ->orWhere('recapito', 'LIKE', '%' . $searchValue . '%')
+                      ->orWhere('tipologia', 'LIKE', '%' . $searchValue . '%')
+                      ->orWhere('stato', 'LIKE', '%' . $searchValue . '%')
+                      ->orWhere('time_stamp_pulizia', 'LIKE', '%' . $searchValue . '%')
+                      ->orWhere('user_nome', 'LIKE', '%' . $searchValue . '%')
+                      ->orWhere('note', 'LIKE', '%' . $searchValue . '%');
             });
+        }
+
+        if ($selectedTags) {
+            foreach($allTagTypes as $tagType) {
+                $tagTypeString = $tagType . '_id';
+                $query->orWhereIn($tagTypeString, $selectedTags);
+            }
         }
 
         $this->filteredItems = $query->pluck('id')->toArray();
         Session::put('filteredItems', $this->filteredItems);
-
+        
         return $query;
-    }
-
-    public $filteredItems = [];
-
-    public function getFilteredItems()
-    {
-        return $this->filteredItems;
     }
 
     /**
@@ -207,8 +181,7 @@ class ItemsDataTable extends DataTable
      */
     public function html(): HtmlBuilder
     {
-        $filteredItems = $this->filteredItems;
-
+        
         return $this->builder()
                     ->setTableId('zanetti-table-download')
                     ->columns($this->getColumns())
@@ -225,9 +198,7 @@ class ItemsDataTable extends DataTable
                                         ['extend' => 'excel', 'text' => 'DOWNLOAD XLSX'],
                                     ],
                                     'columnDefs' => [
-                                        ['visible' => false, 'targets' => [0, 3, 6, 7, 8, 9, 10, 11, 14, 15, 16, 18, 19, 20]],
-                                        ['searchable' => false, 'targets' => [0, 3, 6, 7, 8, 9, 10, 11, 14, 15, 16, 18, 19, 20]],
-
+                                        ['visible' => false, 'targets' => [0, 3, 7, 8, 9, 10, 11, 12, 14, 15, 16, 18, 19, 20]],
                                     ],
                                     'initComplete' => 'function() {
                                         $(".buttons-csv, .buttons-excel").hide();
@@ -242,18 +213,24 @@ class ItemsDataTable extends DataTable
      */
     public function getColumns(): array
     {
-    
-        return [
-            Column::make('id')
-                    ->searchable(false),
+        $tagsArray = [Column::make('id')    
+        ->searchable(false),
+        // mie colonne'items.id'
+        Column::make('street.name')->title('Via'),
+        Column::make('street.city.name')->title('Provincia'), 
+        Column::make('civic')->title('Civico')
+                ->searchable(false),
+        ];
 
-            // mie colonne
-            Column::make('street.name')->title('Via'),
-            Column::make('street.city.name')->title('Provincia'),
-            Column::make('civic')->title('Civico')
-                    ->searchable(false),
-            Column::make('tipologia')->title('Tipologia'),
-            Column::make('stato')->title('Stato'),
+        foreach($this->allTagTypes as $TagType) {
+            $tagTypeTitle = ucfirst($TagType);
+
+            array_push($tagsArray, Column::make($TagType)->title($tagTypeTitle));
+        }
+
+        return array_merge($tagsArray, 
+        [
+           
             Column::make('height')->title('Lunghezza')
                     ->searchable(false),
             Column::make('width')->title('Larghezza')
@@ -266,7 +243,6 @@ class ItemsDataTable extends DataTable
                     ->searchable(false),
             Column::make('caditoie_equiv')->title('Caditoie_equiv')
                     ->searchable(false),
-            Column::make('recapito')->title('Recapito'),
             Column::make('time_stamp_pulizia')->title('Data Pulizia'),
             Column::make('latitude')->title('Latitudine')
                     ->searchable(false),
@@ -289,7 +265,7 @@ class ItemsDataTable extends DataTable
                   ->printable(false)
                   ->width(60)
                   ->addClass('text-center'),
-        ];;
+        ]);
     }
 
     /**

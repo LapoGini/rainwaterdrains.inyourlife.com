@@ -3,8 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\Tag;
+use App\Models\ItemDataTableView;
 use Illuminate\Http\RedirectResponse;
 use App\Http\Requests\TagRequest;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 
 
@@ -28,7 +30,16 @@ class TagController extends Controller
     {
         $validated = $request->validated();
         $validated['domain'] = $domain;
+        $validated['type'] = strtolower($validated['type']);
         Tag::create($validated);
+
+        //distruzione della tabella vista esistente
+        DB::statement('DROP VIEW IF EXISTS item_data_table_views');
+        // Creazione della tabella vista item_data_table_views
+        $itemDataTableView = new ItemDataTableView();
+        $itemDataTableView->itemDataTableViewQuery();
+
+
         return to_route('tags.index', $domain);
     }
 
@@ -51,8 +62,14 @@ class TagController extends Controller
 
     public function destroy(String $domain, Tag $tag) : RedirectResponse
     {
-        //$this->authorize('delete', $tag);
+        //distruzione della tabella vista esistente
+        DB::statement('DROP VIEW IF EXISTS item_data_table_views');
+
         $tag->delete();
+
+        // Creazione della tabella vista item_data_table_views
+        $itemDataTableView = new ItemDataTableView();
+        $itemDataTableView->itemDataTableViewQuery();
         return to_route('tags.index', $domain);
     }
 }
