@@ -176,6 +176,71 @@
         </div>
     </div>
 
+    <div id="loading" style="display: none;" class="py-4">
+        <div class="loader">
+            <div class="loader-wheel"></div>
+            <div class="loader-text"></div>
+        </div>
+    </div>
+    <style>
+        #loading {
+            position: relative;
+        }
+
+        .loader {
+            width: 60px;
+            color: black;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .loader-wheel {
+            animation: spin 1s infinite linear;
+            border: 2px solid rgba(30, 30, 30, 0.5);
+            border-left: 4px solid black;
+            border-radius: 50%;
+            height: 50px;
+            margin-bottom: 10px;
+            width: 50px;
+        }
+
+        .loader-text {
+            color: black;
+            font-family: arial, sans-serif;
+        }
+
+        .loader-text:after {
+            content: 'Loading';
+            animation: load 2s linear infinite;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        @keyframes load {
+            0% {
+                content: 'Loading';
+            }
+            33% {
+                content: 'Loading.';
+            }
+            67% {
+                content: 'Loading..';
+            }
+            100% {
+                content: 'Loading...';
+            }
+        }
+    </style>
+
     {{ $dataTable->table() }}
 </div>
 {{ $dataTable->scripts() }}
@@ -187,6 +252,14 @@
         $('#deletableButton').hide();
         hideDeletableButton();
         hideZipButton();
+
+        $(document).on('preXhr.dt', function (e, settings, data) {
+            $('#loading').show(); // Mostra l'indicatore di caricamento
+        });
+
+        $(document).on('xhr.dt', function (e, settings, json, xhr) {
+            $('#loading').hide(); // Nascondi l'indicatore di caricamento
+        });
 
         // Prendere i filtri all'invio del form
         $('form').submit(function(event) {

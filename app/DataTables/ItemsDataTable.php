@@ -45,7 +45,6 @@ class ItemsDataTable extends DataTable
 
         $searchValue = $this->request->input('search.value');
 
-
         $dataTable = (new EloquentDataTable($query, $searchValue))
             ->addColumn('action', function($item) {
                 $editUrl = url('items/' . $item->id . '/edit');
@@ -146,7 +145,6 @@ class ItemsDataTable extends DataTable
         }
 
         $allTagTypes = DB::table('tags')->distinct()->pluck('type')->toArray();
-
         
         if($searchValue) {
             $query->where(function ($query) use ($searchValue) {
@@ -170,7 +168,7 @@ class ItemsDataTable extends DataTable
 
         $this->filteredItems = $query->pluck('id')->toArray();
         Session::put('filteredItems', $this->filteredItems);
-        
+
         return $query;
     }
 
@@ -189,7 +187,9 @@ class ItemsDataTable extends DataTable
                     ->dom('Bfltip')
                     ->parameters([
                                     'serverSide' => true,
-                                    'processing' => true,
+                                    'bprocessing' => true,
+                                    'deferRender' => true,
+                                    'pageLength' => 10,
                                     'language' => [
                                         'url' => '//cdn.datatables.net/plug-ins/1.13.4/i18n/it-IT.json',
                                     ],

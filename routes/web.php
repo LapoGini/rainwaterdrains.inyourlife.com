@@ -41,6 +41,7 @@ Route::get('/download-zip', [ItemController::class, 'createZipFileFromImg_Items'
 Route::get('/items/{item}/edit/previous', [ItemController::class, 'previous'])->name('items.previous')->middleware(['auth', 'verified', 'role:admin']);
 Route::get('/items/{item}/edit/next', [ItemController::class, 'next'])->name('items.next')->middleware(['auth', 'verified', 'role:admin']);
 Route::get('/items/deletable', [ItemController::class, 'deleteSewers'])->name('items.deleteSewers')->middleware(['auth', 'verified', 'role:admin']);
+Route::get('/crea-tabella-caditoie/{da}/{a}', [\App\Http\Controllers\CaditoieController::class, 'importaDati'])->middleware(['auth', 'verified', 'role:admin']);
 
 
 Route::middleware('auth')->group(function () {
