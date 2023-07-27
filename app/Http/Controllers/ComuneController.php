@@ -24,6 +24,14 @@ class ComuneController extends Controller
                     
                     $cliente = Cliente::where('CLIENTE', $dato->CLIENTE)->first();
 
+                    if ($cliente->id == 1) {
+                        $cliente->id = 3;
+                    } elseif ($cliente->id == 2) {
+                        $cliente->id = 4;
+                    } elseif ($cliente->id == 3) {
+                        $cliente->id = 5;
+                    }
+
                     // Se il cliente esiste, crea la nuova riga nella tabella "City"
                     if ($cliente) {
                         City::create([
@@ -43,5 +51,4 @@ class ComuneController extends Controller
             }
         });
     }
-
 }

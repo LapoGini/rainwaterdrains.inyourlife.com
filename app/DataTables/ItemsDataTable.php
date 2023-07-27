@@ -97,13 +97,59 @@ class ItemsDataTable extends DataTable
      * @param \App\Models\Item $model
      * @return \Illuminate\Database\Eloquent\Builder
      */
-    public function query(ItemDataTableView $model): QueryBuilder
+    public function query(ItemDataTableView $model)
     {
-
         $searchValue = $this->request->input('search.value');
 
-        $query = $model->newQuery()
-                ->with(['street', 'street.city', 'user']);
+        $allTagTypes = DB::table('tags')->distinct()->pluck('type')->toArray();
+
+        $query = DB::table('jc6n141b_zanetti_dev.items AS i')
+        ->select(
+            'i.id AS id',
+            'i.id_sd AS id_sd',
+            'i.id_da_app AS id_da_app',
+            'i.time_stamp_pulizia AS time_stamp_pulizia',
+            'i.caditoie_equiv AS caditoie_equiv',
+            'i.civic AS civic',
+            'i.longitude AS longitude',
+            'i.latitude AS latitude',
+            'i.altitude AS altitude',
+            'i.accuracy AS accuracy',
+            'i.height AS height',
+            'i.width AS width',
+            'i.depth AS depth',
+            'i.pic AS pic',
+            'i.note AS note',
+            'i.street_id AS street_id',
+            'i.user_id AS user_id',
+            'i.cancellabile AS cancellabile',
+            'i.deleted_at AS deleted_at',
+            'i.created_at AS created_at',
+            'i.updated_at AS updated_at'
+        );
+
+        // sottoquery dinamiche per i nomi
+        foreach ($allTagTypes as $tagType) {
+            $query->selectRaw("(
+            SELECT GROUP_CONCAT(`tags`.`name` SEPARATOR ',')
+            FROM `tags`
+            JOIN `item_tag` ON `tags`.`id` = `item_tag`.`tag_id`
+            WHERE `tags`.`type` = '$tagType' AND `item_tag`.`item_id` = `i`.`id`
+            ) AS $tagType");
+        }
+
+        // sottoquery dinamiche per gli id
+        foreach ($allTagTypes as $tagType) {
+            $tagTypeString = $tagType . '_id';
+            $query->selectRaw("(
+            SELECT GROUP_CONCAT(`tags`.`id` SEPARATOR ',')
+            FROM `tags`
+            JOIN `item_tag` ON `tags`.`id` = `item_tag`.`tag_id`
+            WHERE `tags`.`type` = '$tagType' AND `item_tag`.`item_id` = `i`.`id`
+            ) AS $tagTypeString");
+        }
+
+        
 
         $clientId = (isset($this->richiesta['client']) ? $this->richiesta['client'] : '');
         $comuneId = (isset($this->richiesta['comune']) ? $this->richiesta['comune'] : '');
@@ -115,21 +161,15 @@ class ItemsDataTable extends DataTable
         
         
         if ($clientId) {
-            $query->whereHas('street.city', function ($query) use ($clientId) {
-                $query->where('user_id', $clientId);
-            });
+            $query->where('user_id', $clientId);
         }
 
         if ($comuneId) {
-            $query->whereHas('street.city', function ($query) use ($comuneId) {
-                $query->where('id', $comuneId);
-            });
+            $query->where('city_id', $comuneId);
         }
 
         if ($streetId) {
-            $query->whereHas('street', function ($query) use ($streetId) {
-                $query->where('id', $streetId);
-            });
+            $query->where('street_id', $streetId);
         }
 
         if ($fromDateId && $toDateId) {
@@ -139,9 +179,7 @@ class ItemsDataTable extends DataTable
         }
 
         if ($operatorId) {
-            $query->whereHas('user', function ($query) use ($operatorId) {
-                $query->where('id', $operatorId);
-            });
+            $query->where('user_id', $operatorId);
         }
 
         $allTagTypes = DB::table('tags')->distinct()->pluck('type')->toArray();
@@ -168,6 +206,8 @@ class ItemsDataTable extends DataTable
 
         $this->filteredItems = $query->pluck('id')->toArray();
         Session::put('filteredItems', $this->filteredItems);
+
+        dd(DataTables::of($query)->toJson());
 
         return $query;
     }

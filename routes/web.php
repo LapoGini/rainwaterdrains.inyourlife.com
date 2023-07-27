@@ -42,6 +42,10 @@ Route::get('/items/{item}/edit/previous', [ItemController::class, 'previous'])->
 Route::get('/items/{item}/edit/next', [ItemController::class, 'next'])->name('items.next')->middleware(['auth', 'verified', 'role:admin']);
 Route::get('/items/deletable', [ItemController::class, 'deleteSewers'])->name('items.deleteSewers')->middleware(['auth', 'verified', 'role:admin']);
 Route::get('/crea-tabella-caditoie/{da}/{a}', [\App\Http\Controllers\CaditoieController::class, 'importaDati'])->middleware(['auth', 'verified', 'role:admin']);
+Route::get('/crea-tabella-comuni', [\App\Http\Controllers\ComuneController::class, 'importaDati'])->middleware(['auth', 'verified', 'role:admin']);
+Route::get('/crea-tabella-item_tag', [\App\Http\Controllers\ItemTagController::class, 'importaDati'])->middleware(['auth', 'verified', 'role:admin']);
+
+
 
 
 Route::middleware('auth')->group(function () {

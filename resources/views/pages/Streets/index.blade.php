@@ -38,7 +38,11 @@
                     {{$street->name}}
                 </td>
                 <td class="px-6 py-4">
-                    {{$street->city->name}} ({{$street->city->district}})
+                    @if($street->city)
+                        {{$street->city->name}} ({{$street->city->district}})
+                    @else
+                        N/A
+                    @endif
                 </td>
                 <td class="px-6 py-4">
                     <div class="flex-none">

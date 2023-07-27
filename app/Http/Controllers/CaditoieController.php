@@ -33,7 +33,6 @@ class CaditoieController extends Controller
 
                     if ($street) {
                         $user = User::where('id', $dato->user_id)->first();
-                        var_dump($user->id);
 
                         Item::create([
                             'id' => $dato->id,

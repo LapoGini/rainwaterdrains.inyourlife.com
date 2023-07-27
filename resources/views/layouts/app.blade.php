@@ -65,6 +65,14 @@
 
 <body>
         @auth
+
+        <div id="loading" style="display: none;" class="py-4">
+            <div class="loader">
+                <div class="loader-wheel"></div>
+                <div class="loader-text"></div>
+            </div>
+        </div>
+
         
         <nav class="navbar navbar-expand-md navbar-light shadow-sm px-5 py-2 bg-light">
         
@@ -136,5 +144,17 @@
             @yield('content')
         </main>
 </body>
+
+<script>
+    $(document).ready(function() {
+            $(document).on('preXhr.dt', function (e, settings, data) {
+                $('#loading').show(); // Mostra l'indicatore di caricamento
+            });
+
+            $(document).on('xhr.dt', function (e, settings, json, xhr) {
+                $('#loading').hide(); // Nascondi l'indicatore di caricamento
+            });
+    });
+</script>
 
 </html>
