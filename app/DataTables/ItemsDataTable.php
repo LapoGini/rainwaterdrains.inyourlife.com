@@ -21,6 +21,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Session;
 use Yajra\DataTables\Datatables;
 
+
 class ItemsDataTable extends DataTable
 {
 
@@ -40,64 +41,7 @@ class ItemsDataTable extends DataTable
      * @param QueryBuilder $query Results from query() method.
      * @return \Yajra\DataTables\EloquentDataTable
      */
-    public function dataTable(QueryBuilder $query): EloquentDataTable
-    {
-
-        $searchValue = $this->request->input('search.value');
-
-        $dataTable = (new EloquentDataTable($query, $searchValue))
-            ->addColumn('action', function($item) {
-                $editUrl = url('items/' . $item->id . '/edit');
-                $deleteUrl = url('items/' . $item->id);
-            
-                $actionBtn = 
-                '<a href="' . $editUrl . '" class="px-3 py-2 rounded me-3 bg-black text-white"><i class="fas fa-pen-to-square"></i></a>
-                <a href="' . $deleteUrl . '" class="px-3 py-2 rounded bg-danger text-white" onclick="event.preventDefault(); if (confirm(\'Sei sicuro di voler eliminare questo comune?\')) { document.getElementById(\'delete-form-' . $item->id .'\').submit(); }">
-                    <i class="fa-solid fa-trash"></i>
-                </a>
-                <form id="delete-form-' . $item->id . '" action="' . $deleteUrl . '" method="POST" style="display: none;">
-                    @csrf
-                    @method(\'DELETE\')
-                </form>';
-            
-                return $actionBtn;
-            })
-            ->editColumn('volume', function($item) {
-                return $item->height * $item->width * $item->depth;
-            })
-            ->editColumn('area', function($item) {
-                return $item->width * $item->depth;
-            })
-            ->editColumn('caditoie_equiv', function($item) {
-                return 'caditoie equiv.';
-            })
-            
-            ->editColumn('solo_georef', function($item) {
-                return 'solo georef';
-            })
-            ->editColumn('eseguire_a_mano_in_notturno', function($item) {
-                $timeStamp = $item->time_stamp_pulizia;
-                $hour = (int) date('H', strtotime($timeStamp));
-                $item->calcolo_notturno = ($hour >= 20 || $hour < 6) ? 'si' : 'no';
-                return $item->calcolo_notturno;
-            })
-            ->editColumn('link_fotografia', function($item) {
-                $item->pic_link = $this->createLinkPathFromImg_Item($item);
-                return $item->pic_link;
-            })
-            ->rawColumns(['action'])
-            ->setRowId('id');
-
-        return $dataTable;
-    }
-
-    /**
-     * Get query source of dataTable.
-     *
-     * @param \App\Models\Item $model
-     * @return \Illuminate\Database\Eloquent\Builder
-     */
-    public function query(ItemDataTableView $model)
+    public function dataTable()
     {
         $searchValue = $this->request->input('search.value');
 
@@ -126,7 +70,14 @@ class ItemsDataTable extends DataTable
             'i.deleted_at AS deleted_at',
             'i.created_at AS created_at',
             'i.updated_at AS updated_at'
-        );
+        )
+        ->selectRaw('s.name AS street_nome')
+        ->selectRaw('c.id AS city_id')
+        ->selectRaw('c.name AS city_nome')
+        ->selectRaw('u.name AS user_nome')
+        ->join('streets AS s', 'i.street_id', '=', 's.id')
+        ->join('cities AS c', 's.city_id', '=', 'c.id')
+        ->join('users AS u', 'i.user_id', '=', 'u.id');
 
         // sottoquery dinamiche per i nomi
         foreach ($allTagTypes as $tagType) {
@@ -149,8 +100,6 @@ class ItemsDataTable extends DataTable
             ) AS $tagTypeString");
         }
 
-        
-
         $clientId = (isset($this->richiesta['client']) ? $this->richiesta['client'] : '');
         $comuneId = (isset($this->richiesta['comune']) ? $this->richiesta['comune'] : '');
         $streetId = (isset($this->richiesta['street']) ? $this->richiesta['street'] : '');
@@ -158,7 +107,6 @@ class ItemsDataTable extends DataTable
         $toDateId = (isset($this->richiesta['toDate']) ? $this->richiesta['toDate'] : '');
         $operatorId = (isset($this->richiesta['operator']) ? $this->richiesta['operator'] : '');
         $selectedTags = (isset($this->richiesta['tags']) ? $this->richiesta['tags'] : '');
-        
         
         if ($clientId) {
             $query->where('user_id', $clientId);
@@ -207,10 +155,74 @@ class ItemsDataTable extends DataTable
         $this->filteredItems = $query->pluck('id')->toArray();
         Session::put('filteredItems', $this->filteredItems);
 
-        dd(DataTables::of($query)->toJson());
+        $dataTable = DataTables::of($query, $searchValue)
+            ->addColumn('action', function($item) {
+                $deleteUrl = url('items/' . $item->id);
+            
+                $actionBtn =
+                '<button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#exampleModal" data-bs-whatever="{\'id\': ' . $item->id . ', \'state\': \'view\'}">View</button>
+                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#exampleModal" data-bs-whatever="{\'id\': ' . $item->id . ', \'state\': \'edit\'}">Edit</button>
+                <a href="' . $deleteUrl . '" class="px-3 py-2 rounded bg-danger text-white" onclick="event.preventDefault(); if (confirm(\'Sei sicuro di voler eliminare questo comune?\')) { document.getElementById(\'delete-form-' . $item->id .'\').submit(); }">
+                    <i class="fa-solid fa-trash"></i>
+                </a>
+                <form id="delete-form-' . $item->id . '" action="' . $deleteUrl . '" method="POST" style="display: none;">
+                    @csrf
+                    @method(\'DELETE\')
+                </form>';
+            
+                return $actionBtn;
+            })
+            ->editColumn('volume', function($item) {
+                return $item->height * $item->width * $item->depth;
+            })
+            ->editColumn('area', function($item) {
+                return $item->width * $item->depth;
+            })
+            ->editColumn('caditoie_equiv', function($item) {
+                return 'caditoie equiv.';
+            })
+            
+            ->editColumn('solo_georef', function($item) {
+                return 'solo georef';
+            })
+            ->editColumn('eseguire_a_mano_in_notturno', function($item) {
+                $timeStamp = $item->time_stamp_pulizia;
+                $hour = (int) date('H', strtotime($timeStamp));
+                $item->calcolo_notturno = ($hour >= 20 || $hour < 6) ? 'si' : 'no';
+                return $item->calcolo_notturno;
+            })
+            ->editColumn('link_fotografia', function($item) {
+                $item->pic_link = $this->createLinkPathFromImg_Item($item);
+                return $item->pic_link;
+            })
+            ->filterColumn('search_value', function ($query, $searchValue) {
+                $query->where(function ($query) use ($searchValue) {
+                    $query->where('street_nome', 'LIKE', '%' . $searchValue . '%')
+                    ->orWhere('city_nome', 'LIKE', '%' . $searchValue . '%')
+                    ->orWhere('recapito', 'LIKE', '%' . $searchValue . '%')
+                    ->orWhere('tipologia', 'LIKE', '%' . $searchValue . '%')
+                    ->orWhere('stato', 'LIKE', '%' . $searchValue . '%')
+                    ->orWhere('time_stamp_pulizia', 'LIKE', '%' . $searchValue . '%')
+                    ->orWhere('user_nome', 'LIKE', '%' . $searchValue . '%')
+                    ->orWhere('note', 'LIKE', '%' . $searchValue . '%');
+                });
+            })
+            ->rawColumns(['action'])
+            ->setRowId('id');
 
-        return $query;
+        return $dataTable;
     }
+
+    /**
+     * Get query source of dataTable.
+     *
+     * @param \App\Models\Item $model
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    /*public function query(ItemDataTableView $model)
+    {
+       
+    }*/
 
     /**
      * Optional method if you want to use html builder.
@@ -256,8 +268,8 @@ class ItemsDataTable extends DataTable
         $tagsArray = [Column::make('id')    
         ->searchable(false),
         // mie colonne'items.id'
-        Column::make('street.name')->title('Via'),
-        Column::make('street.city.name')->title('Provincia'), 
+        Column::make('street_nome')->title('Via'),
+        Column::make('city_nome')->title('Provincia'), 
         Column::make('civic')->title('Civico')
                 ->searchable(false),
         ];
@@ -290,7 +302,7 @@ class ItemsDataTable extends DataTable
                     ->searchable(false),
             Column::make('altitude')->title('Altitudine')
                     ->searchable(false),
-            Column::make('user.name')->title('Operatore'),
+            Column::make('user_nome')->title('Operatore'),
             Column::make('solo_georef')->title('Solo_georef')
                     ->searchable(false),
             Column::make('eseguire_a_mano_in_notturno')->title('Eseguire_a_mano_in_notturno')

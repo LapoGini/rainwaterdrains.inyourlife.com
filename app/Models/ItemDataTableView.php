@@ -52,7 +52,14 @@ class ItemDataTableView extends Model
                             'i.deleted_at AS deleted_at',
                             'i.created_at AS created_at',
                             'i.updated_at AS updated_at'
-                        );
+                        )
+                        ->selectRaw('s.name AS street_nome')
+                        ->selectRaw('c.id AS city_id')
+                        ->selectRaw('c.name AS city_nome')
+                        ->selectRaw('u.name AS user_nome')
+                        ->join('streets AS s', 'i.street_id', '=', 's.id')
+                        ->join('cities AS c', 's.city_id', '=', 'c.id')
+                        ->join('users AS u', 'i.user_id', '=', 'u.id');
 
         // sottoquery dinamiche per i nomi
         foreach ($allTagTypes as $tagType) {
