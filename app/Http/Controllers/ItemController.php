@@ -271,11 +271,6 @@ class ItemController extends Controller
         $item->pic_link = $this->createLinkPathFromImg_Item($item);
 
         $filteredItemsSession = Session::get('filteredItems');
-        $filteredItems = Item::with('street', 'street.city', 'tags', 'user')
-                ->whereIn('id', $filteredItemsSession)
-                ->orderBy('id', 'DESC')
-                ->get();
-
         $prevItemId = null;
         $nextItemId = null;
         
@@ -287,6 +282,52 @@ class ItemController extends Controller
 
         return view('pages.Items.edit', compact('item', 'items', 'clients', 'operators', 'streets', 'comuni', 'tags', 'itemsDate', 'tagTypes', 'groupedTags', 'groupedTagsType', 'prevItemId', 'nextItemId'));
     }
+
+    public function view(ItemsDataTable $dataTable, Item $item)
+    {
+        $items = Item::with('street', 'street.city', 'tags', 'user')->orderBy('id', 'DESC')->get();
+        $comuni = City::all();
+
+        $strada_caditoia =  Street::find($item->street_id);
+
+        $streets = Street::with('city')->where('city_id',$strada_caditoia->city_id)->get();
+        $clients = User::join('role_user', 'users.id', '=', 'role_user.user_id')->join('roles', 'role_user.role_id', '=', 'roles.id')->where('roles.id', 3)->select('users.*')->get();
+        $tagTypes = Tag::where('domain', 'item')->distinct('type')->pluck('type');
+        $operators = User::join('role_user', 'users.id', '=', 'role_user.user_id')->join('roles', 'role_user.role_id', '=', 'roles.id')->where('roles.id', 2)->select('users.*')->get();
+        $itemsDate = Item::pluck('time_stamp_pulizia');
+
+
+        $tags = Tag::where('domain', 'item')->get();
+        $groupedTags = [];
+        foreach ($items as $el) {
+            $itemTags = $el->tags;
+            foreach ($itemTags as $tag) {
+                $type = $tag->type;
+                $groupedTags[$el->id][$type][] = $tag;
+            }
+        }
+
+        $groupedTagsType = [];
+        foreach ($tagTypes as $type) {
+            $tags = Tag::where('domain', 'item')->where('type', $type)->get();
+            $groupedTagsType[$type] = $tags;
+        }
+
+        $item->pic_link = $this->createLinkPathFromImg_Item($item);
+        $filteredItemsSession = Session::get('filteredItems');
+        $prevItemId = null;
+        $nextItemId = null;
+
+        $currentIndex = array_search($item->id, $filteredItemsSession);
+        if ($currentIndex !== false) {
+            $prevItemId = ($currentIndex > 0) ? $filteredItemsSession[$currentIndex - 1] : null;
+            $nextItemId = ($currentIndex < count($filteredItemsSession) - 1) ? $filteredItemsSession[$currentIndex + 1] : null;
+        }
+        
+
+        return view('pages.Items.view', compact('item', 'items', 'clients', 'operators', 'streets', 'comuni', 'tags', 'itemsDate', 'tagTypes', 'groupedTags', 'groupedTagsType', 'prevItemId', 'nextItemId'));
+    }
+
 
 
     public function update(ItemRequest $request, Item $item) : RedirectResponse

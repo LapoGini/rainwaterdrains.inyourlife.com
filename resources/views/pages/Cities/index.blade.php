@@ -49,11 +49,7 @@
                     {{ $city->pics }}
                 </td>
                 <td class="px-6 py-4">
-                    @if($city->user->name)
-                        {{$city->user->name}}
-                    @else
-                        N/A
-                    @endif
+                    {{$city->user->name}}
                 </td>
                 <td class="px-6 py-4">
                     <div class="flex-none">
