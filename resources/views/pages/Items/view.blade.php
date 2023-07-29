@@ -1,14 +1,7 @@
 @extends('layouts.app')
 @section('content')
 
-<div class="bg-white">
-    <h2 class="container mx-auto py-3">
-        Modifica 
-    </h2>
-</div>
-
-
-<div class="w-75 p-5 m-auto">
+<div class="w-100 p-5 m-auto">
     <!--<div class="pb-5">
         <a href="{{ $prevItemId ? route('items.edit', $prevItemId) : '#' }}" class="prevNext btn d-inline-flex rounded align-items-center text-decoration-none fw-bold bg-primary text-light border-0 py-2 px-3{{ $prevItemId ? '' : ' disabled' }}">
             Precedente
@@ -19,7 +12,7 @@
     </div>-->
 
     <div class="row">
-        <div class="col-12">
+        <div class="col-6">
             <form action="{{ route('items.update', $item) }}" method="POST">
                 @csrf
                 @method('PUT')
@@ -160,16 +153,16 @@
                             @endforeach
                         </div>
                         <div class="text-end">
-                            <a href="{{ route('items.index') }}" class="btn d-inline-flex rounded align-items-center text-decoration-none fw-bold bg-secondary text-light border-0 ms-auto py-2 px-3">
+                            <a onclick="window.close()" class="btn d-inline-flex rounded align-items-center text-decoration-none fw-bold bg-secondary text-light border-0 ms-auto py-2 px-3">
                                 Indietro
-                            </a>   
+                            </a>
                         </div>
-                                     
+
                     </div>
                 </div>
             </form>
         </div>
-        <div class="col-12">
+        <div class="col-6">
             <div class="img_caditoia mb-5">
                 <img src="{{ $item->pic_link }}" alt="">
             </div>
@@ -180,7 +173,7 @@
 
 <script>
     $(document).ready(function() {
-
+        $('nav').hide();
         var latitude = $('#map').data('latitude');
         var longitude = $('#map').data('longitude');
 
@@ -210,7 +203,7 @@
 
             var map = new google.maps.Map(document.getElementById('map'), {
                 center: latLng,
-                zoom: 8
+                zoom: 14
             });
 
             // Aggiungere marker per la posizione
@@ -219,7 +212,7 @@
                 map: map
             });
         }
-        initMap(latitude, longitude);
+        initMap(parseFloat(latitude), parseFloat(longitude));
     });
 </script>
 

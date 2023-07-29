@@ -50,11 +50,11 @@ class ItemsDataTable extends DataTable
                 $editUrl = url('items/' . $item->id . '/edit');
                 $viewUrl = url('items/' . $item->id . '/view');
                 $deleteUrl = url('items/' . $item->id);
-            
-                $actionBtn = 
+
+                $actionBtn =
                 '
-                <a href="' . $viewUrl . '" class="btn btn-success p-1"><i class="fas fa-search"></i> Vedi</a>
-                <a href="' . $editUrl . '" class="btn btn-primary p-1"><i class="fas fa-edit"></i> Modifica</a>
+                <a onclick="openwindow(1000,1500,\'' . $viewUrl . '\')" class="btn btn-success p-1"><i class="fas fa-search"></i> Vedi</a>
+                <a onclick="openwindow(1000,1500,\'' . $editUrl . '\')" class="btn btn-primary p-1"><i class="fas fa-edit"></i> Modifica</a>
                 <a href="' . $deleteUrl . '" class="btn btn-danger p-1" onclick="event.preventDefault(); if (confirm(\'Sei sicuro di voler eliminare questo comune?\')) { document.getElementById(\'delete-form-' . $item->id .'\').submit(); }">
                     <i class="fa-solid fa-trash"></i> Cancella
                 </a>
@@ -62,7 +62,7 @@ class ItemsDataTable extends DataTable
                     @csrf
                     @method(\'DELETE\')
                 </form>';
-            
+
                 return $actionBtn;
             })
             ->editColumn('volume', function($item) {
@@ -74,7 +74,7 @@ class ItemsDataTable extends DataTable
             ->editColumn('caditoie_equiv', function($item) {
                 return 'caditoie equiv.';
             })
-            
+
             ->editColumn('solo_georef', function($item) {
                 return 'solo georef';
             })
@@ -115,8 +115,8 @@ class ItemsDataTable extends DataTable
         $toDateId = (isset($this->richiesta['toDate']) ? $this->richiesta['toDate'] : '');
         $operatorId = (isset($this->richiesta['operator']) ? $this->richiesta['operator'] : '');
         $selectedTags = (isset($this->richiesta['tags']) ? $this->richiesta['tags'] : '');
-        
-        
+
+
         if ($clientId) {
             $query->whereHas('street.city', function ($query) use ($clientId) {
                 $query->where('user_id', $clientId);
@@ -148,7 +148,7 @@ class ItemsDataTable extends DataTable
         }
 
         $allTagTypes = DB::table('tags')->distinct()->pluck('type')->toArray();
-        
+
         if($searchValue) {
             $query->where(function ($query) use ($searchValue) {
                 $query->where('street_nome', 'LIKE', '%' . $searchValue . '%')
@@ -162,12 +162,16 @@ class ItemsDataTable extends DataTable
             });
         }
 
-        if ($selectedTags) {
-            foreach($allTagTypes as $tagType) {
-                $tagTypeString = $tagType . '_id';
-                $query->orWhereIn($tagTypeString, $selectedTags);
-            }
-        }
+        /*if ($selectedTags) {
+            $query->where(function ($query) use ($selectedTags,$allTagTypes){*/
+                foreach($allTagTypes as $tagType) {
+                    if (isset($this->richiesta[$tagType])){
+                        $tagTypeString = $tagType . '_id';
+                        $query->whereIn($tagTypeString, $this->richiesta[$tagType]);
+                    }
+                }
+        /*    });
+        }*/
 
         $this->filteredItems = $query->pluck('id')->toArray();
         Session::put('filteredItems', $this->filteredItems);
@@ -182,7 +186,7 @@ class ItemsDataTable extends DataTable
      */
     public function html(): HtmlBuilder
     {
-        
+
         return $this->builder()
                     ->setTableId('zanetti-table-download')
                     ->columns($this->getColumns())
@@ -192,13 +196,17 @@ class ItemsDataTable extends DataTable
                                     'serverSide' => true,
                                     'bprocessing' => true,
                                     'deferRender' => true,
-                                    'pageLength' => 10,
+                                    'pageLength' => 50,
+                                    'lengthMenu' => [
+                                        [50, 250, 1000, -1],
+                                        [50, 250, 1000, 'All']
+                                    ],
                                     'language' => [
                                         'url' => '//cdn.datatables.net/plug-ins/1.13.4/i18n/it-IT.json',
                                     ],
                                     'buttons' => [
-                                        ['extend' => 'csv', 'text' => 'DOWNLOAD CSV'],
-                                        ['extend' => 'excel', 'text' => 'DOWNLOAD XLSX'],
+                                        ['extend' => 'csv', 'text' => 'DOWNLOAD CSV','exportOptions' => ['columns' => 'th:not(:last-child)']],
+                                        ['extend' => 'excel', 'text' => 'DOWNLOAD XLSX','exportOptions' => ['columns' => 'th:not(:last-child)']],
                                     ],
                                     'columnDefs' => [
                                         ['visible' => false, 'targets' => [0, 3, 7, 8, 9, 10, 11, 12, 14, 15, 16, 18, 19, 20]],
@@ -216,11 +224,11 @@ class ItemsDataTable extends DataTable
      */
     public function getColumns(): array
     {
-        $tagsArray = [Column::make('id')    
+        $tagsArray = [Column::make('id')
         ->searchable(false),
         // mie colonne'items.id'
         Column::make('street.name')->title('Via'),
-        Column::make('street.city.name')->title('Provincia'), 
+        Column::make('street.city.name')->title('Provincia'),
         Column::make('civic')->title('Civico')
                 ->searchable(false),
         ];
@@ -231,9 +239,9 @@ class ItemsDataTable extends DataTable
             array_push($tagsArray, Column::make($TagType)->title($tagTypeTitle));
         }
 
-        return array_merge($tagsArray, 
+        return array_merge($tagsArray,
         [
-           
+
             Column::make('height')->title('Lunghezza')
                     ->searchable(false),
             Column::make('width')->title('Larghezza')
@@ -281,7 +289,7 @@ class ItemsDataTable extends DataTable
         return 'Items_' . date('YmdHis');
     }
 
-    public function createLinkPathFromImg_Item($item) 
+    public function createLinkPathFromImg_Item($item)
     {
         $linkPath = env('APP_URL') . '/img_items/' . date('Ymd', strtotime($item->time_stamp_pulizia)) . '/' . $item->pic;
         return $linkPath;

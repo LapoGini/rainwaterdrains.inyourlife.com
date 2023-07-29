@@ -31,7 +31,7 @@
     <script src="//cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js"></script>
     <script src="//cdn.datatables.net/buttons/2.3.6/js/buttons.html5.min.js"></script>
     <script src="//cdn.datatables.net/buttons/2.3.6/js/buttons.print.min.js"></script>
-    
+
     <link rel="preload" as="style" href="{{ env('APP_URL') }}/build/assets/app.e9ed2bd0.css">
     <link rel="modulepreload" href="{{ env('APP_URL') }}/build/assets/app.a032b13e.js">
     <link rel="stylesheet" href="{{ env('APP_URL') }}/build/assets/app.e9ed2bd0.css">
@@ -58,7 +58,7 @@
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
     <!-- Mappa GoogleMaps -->
-    <script src="https://maps.googleapis.com/maps/api/js?key={{ config('googlemap')['map_apikey'] }}" async defer></script>
+    <script src="https://maps.googleapis.com/maps/api/js?key={{ config('googlemap')['map_apikey'] }}"></script>
 
 
 </head>
@@ -73,9 +73,9 @@
             </div>
         </div>
 
-        
+
         <nav class="navbar navbar-expand-md navbar-light shadow-sm px-5 py-2 bg-light">
-        
+
             <a class="navbar-brand d-flex align-items-center" href="{{ url('/') }}">
                 <div class="logo_laravel">
                     <img src="{{ asset('build/assets/logo-zanetti-ambiente-9d418d94.png') }}" alt="Logo" class="w-75">
@@ -86,10 +86,10 @@
                 <span class="navbar-toggler-icon"></span>
             </button>
 
-            
+
             <div class="collapse navbar-collapse" id="navbarSupportedContent">
                 <!-- Left Side Of Navbar -->
-                
+
                 <ul class="navbar-nav me-auto">
                     <li class="nav-item px-3">
                         <a class="nav-link" href="{{ route('items.index') }}"><i class="fas fa-grip-vertical"></i> {{ __('Caditoie') }}</a>
@@ -155,6 +155,14 @@
                 $('#loading').hide(); // Nascondi l'indicatore di caricamento
             });
     });
+    var openedWindow;
+    function openwindow(width,height,url) {
+        if(openedWindow){
+            openedWindow.close();
+        }
+
+        openedWindow = window.open(url, "_blank", "toolbar=no,top=0,left=100,width="+width+",height="+height);
+    }
 </script>
 
 </html>

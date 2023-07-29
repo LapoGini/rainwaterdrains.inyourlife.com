@@ -22,9 +22,9 @@ use Yajra\DataTables\DataTables;
 
 class ItemController extends Controller
 {
-    public function index(ItemsDataTable $dataTable, FilteredDataRequest $request) 
+    public function index(ItemsDataTable $dataTable, FilteredDataRequest $request)
     {
-  
+
         $items = Item::with('street', 'street.city', 'tags', 'user')->orderBy('id', 'DESC')->get();
 
         $selectedClient = request()->query('client');
@@ -39,7 +39,7 @@ class ItemController extends Controller
 
         $tags = Tag::where('domain', 'item')->get();
         $groupedTags = [];
-        
+
         foreach ($items as $item) {
             $itemTags = $item->tags;
 
@@ -84,7 +84,7 @@ class ItemController extends Controller
         };
     }
 
-    /*private function getItems(FilteredDataRequest $request) 
+    /*private function getItems(FilteredDataRequest $request)
     {
 
         $clientId = $request->input('clientId');
@@ -139,7 +139,7 @@ class ItemController extends Controller
         return $items;
     }*/
 
-    public function createZipFileFromImg_Items() 
+    public function createZipFileFromImg_Items()
     {
 
         $ret['success'] = false;
@@ -154,7 +154,7 @@ class ItemController extends Controller
         $zip = new ZipArchive;
 
         $zipFileName = '/downloads/' . time() . '.zip';
-        
+
         $zipFilePath = Storage::disk('img_items')->path($zipFileName);
 
         if ($zip->open($zipFilePath, ZipArchive::CREATE) === true) {
@@ -196,7 +196,7 @@ class ItemController extends Controller
 
         $ret['data']['cancellabile'] = [];
         $ret['data']['non_cancellabile'] = [];
-        
+
         $ids = [];
 
         $ids = Session::get('filteredItems');
@@ -212,14 +212,14 @@ class ItemController extends Controller
                 $ret['data']['non_cancellabile'][] = $item->id;
             }
         }
-        
+
         if (!empty($ret['data']['cancellabile'])) {
             $ret['success'] = true;
             $ret['message'] = 'Hai reso cancellabili alcune caditoie!';
         } else {
             $ret['message'] = 'Impossibile rendere cancellabili alcune caditoie!';
         }
-        
+
         return json_encode($ret);
     }
 
@@ -273,7 +273,7 @@ class ItemController extends Controller
         $filteredItemsSession = Session::get('filteredItems');
         $prevItemId = null;
         $nextItemId = null;
-        
+
         $currentIndex = array_search($item->id, $filteredItemsSession);
         if ($currentIndex !== false) {
             $prevItemId = ($currentIndex > 0) ? $filteredItemsSession[$currentIndex - 1] : null;
@@ -323,30 +323,28 @@ class ItemController extends Controller
             $prevItemId = ($currentIndex > 0) ? $filteredItemsSession[$currentIndex - 1] : null;
             $nextItemId = ($currentIndex < count($filteredItemsSession) - 1) ? $filteredItemsSession[$currentIndex + 1] : null;
         }
-        
+
 
         return view('pages.Items.view', compact('item', 'items', 'clients', 'operators', 'streets', 'comuni', 'tags', 'itemsDate', 'tagTypes', 'groupedTags', 'groupedTagsType', 'prevItemId', 'nextItemId'));
     }
 
-
-
-    public function update(ItemRequest $request, Item $item) : RedirectResponse
+    public function update(ItemsDataTable $dataTable,ItemRequest $request, Item $item)
     {
         //$this->authorize('update', $item);
         $validated = $request->validated();
-        
+
         $street = Street::find($validated['street']);
         if($street) {
             $item->street()->associate($street)->save();
         }
-        
+
         $item->update($validated);
-        
+
         if(isset($validated['tags'])){
             $item->tags()->sync($validated['tags']);
         }
 
-        return to_route('items.index');
+        return $this->edit($dataTable,$item);
     }
 
     public function destroy(Item $item) : RedirectResponse
@@ -356,10 +354,10 @@ class ItemController extends Controller
         return redirect(route('pages.items.index'));
     }
 
-    // public function exportCSV() 
+    // public function exportCSV()
     // {
     //     $items = Item::with('street', 'street.city', 'tags', 'user')->orderBy('id', 'DESC')->get();
-        
+
     //     $fileName = 'caditoie.csv';
 
     //     $headers = array(
@@ -370,7 +368,7 @@ class ItemController extends Controller
     //         "Expires"             => "0"
     //     );
 
-        
+
     //     $columns = [
     //         "Comune",
     //         "Via",

@@ -82,7 +82,7 @@
                             <div class="tag-box pb-4">
                                 @foreach($tags as $tag)
                                     <label for="tag_{{$tag->id}}" class="inline-flex items-center">
-                                        <input id="tag_{{$tag->id}}" name="tags[]" value="{{ $tag->id }}" type="checkbox" class="border-gray-300 rounded px-4 py-2 mr-2">
+                                        <input id="tag_{{$tag->id}}" name="{{$type}}[]" value="{{ $tag->id }}" type="checkbox" class="border-gray-300 rounded px-4 py-2 mr-2">
                                         <span>{{ $tag->name }}</span>
                                     </label>
                                 @endforeach
@@ -188,7 +188,7 @@
         $('#deletableButton').hide();
         hideDeletableButton();
         hideZipButton();
-        
+
 
         // Prendere i filtri all'invio del form
         $('form').submit(function(event) {
@@ -220,7 +220,7 @@
             $('#street').html('');
             if(selectedClient !== '') {
                 $.ajax({
-                    url: "items/city_id/" + selectedClient, 
+                    url: "items/city_id/" + selectedClient,
                     type: 'GET',
                     success: function(response) {
                         $('#comune').html(response);
@@ -238,7 +238,7 @@
                 $('#street').html('');
             } else {
                 $.ajax({
-                    url: "/items/street/" + selectedComune, 
+                    url: "/items/street/" + selectedComune,
                     type: 'GET',
                     success: function(response) {
                         $('#street').html(response);
@@ -340,8 +340,8 @@
                 }
             });
         }
-       
-        
+
+
         // Funzione per rendere cancellabili le caditoie
         function deleteSewers() {
             let text = "Sei sicuro di voler eliminare le caditoie?\nScegli Ok o Annulla.";
