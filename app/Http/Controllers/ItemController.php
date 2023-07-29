@@ -16,18 +16,20 @@ use ZipArchive;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Session;
 use Yajra\DataTables\DataTablesEditor;
 use Yajra\DataTables\DataTables;
 
 class ItemController extends Controller
 {
-    public function index(ItemsDataTable $dataTable) 
+    public function index(ItemsDataTable $dataTable, FilteredDataRequest $request)
     {
+
+        $items = Item::with('street', 'street.city', 'tags', 'user')->orderBy('id', 'DESC')->get();
 
         $selectedClient = request()->query('client');
         $selectedComune = request()->query('comune');
-        
-        $items = Item::with('street', 'street.city', 'tags', 'user')->orderBy('id', 'DESC')->paginate(50);
+
         $comuni = City::join('users', 'cities.user_id', '=', 'users.id')->where('users.id',  $selectedClient)->get();
         $streets = Street::join('cities', 'cities.id', '=', 'streets.city_id')->join('users', 'cities.user_id', '=', 'users.id')->where('users.id', $selectedComune)->select('streets.*')->get();
         $clients = User::join('role_user', 'users.id', '=', 'role_user.user_id')->join('roles', 'role_user.role_id', '=', 'roles.id')->where('roles.id', 3)->select('users.*')->get();
@@ -37,15 +39,9 @@ class ItemController extends Controller
 
         $tags = Tag::where('domain', 'item')->get();
         $groupedTags = [];
-        foreach ($items as $item) {
-            $timeStamp = $item->time_stamp_pulizia;
-            // per calcolare se è notturno
-            $hour = (int) date('H', strtotime($timeStamp));
-            $item->calcolo_notturno = ($hour >= 20 || $hour < 6) ? 'si' : 'no';
-            $itemTags = $item->tags;
 
-            // per creare la path
-            $item->pic_link = $this->createLinkPathFromImg_Item($item);
+        foreach ($items as $item) {
+            $itemTags = $item->tags;
 
             foreach ($itemTags as $tag) {
                 $type = $tag->type;
@@ -59,8 +55,8 @@ class ItemController extends Controller
             $groupedTagsType[$type] = $tags;
         }
 
-        return $dataTable->render('pages.Items.index', compact('items', 'clients', 'operators', 'streets', 'comuni', 'tags', 'itemsDate', 'tagTypes', 'groupedTags', 'groupedTagsType'));
-        //return $dataTable->render('pages.items.index');
+
+        return $dataTable->with('richiesta', $request->all())->render('pages.Items.index', compact('items', 'clients', 'operators', 'streets', 'comuni', 'tags', 'itemsDate', 'tagTypes', 'groupedTags', 'groupedTagsType'));
     }
 
     public function createLinkPathFromImg_Item($item) {
@@ -88,82 +84,7 @@ class ItemController extends Controller
         };
     }
 
-    public function filterData(FilteredDataRequest $request)
-    {
-        $items = $this->getItems($request);
-        $caditoie = [];
-        $row=0;
-
-        foreach($items as $item) {
-
-            $timeStamp = $item->time_stamp_pulizia;
-            // per calcolare se è notturno
-            $hour = (int) date('H', strtotime($timeStamp));
-            $item->calcolo_notturno = ($hour >= 20 || $hour < 6) ? 'si' : 'no';
-
-            $item->pic_link = $this->createLinkPathFromImg_Item($item);
-
-            $pozzetto_nome = null;
-            $stato_nome = null;
-            $recapito_nome = null;
-            
-            foreach ($item->tags()->get() as $tag) {
-                if ($tag->type == 'Stato') {
-                    $stato_nome = $tag->name;
-                } else if ($tag->type == 'Recapito') {
-                    $recapito_nome = $tag->name;
-                } else if ($tag->type == 'Tipo Pozzetto') {
-                    $pozzetto_nome = $tag->name;
-                }
-            }
-            $caditoie[$row] = [
-                $item->id,
-                $item->street->name,
-                $item->street->city->name,
-                $item->civic,
-                $pozzetto_nome,
-                $stato_nome,
-                $item->height,
-                $item->width,
-                $item->depth,
-                $item->height * $item->width * $item->depth,
-                $item->width * $item->depth,
-                $item->caditoie_equiv,
-                $recapito_nome,
-                $item->time_stamp_pulizia,
-                $item->latitude,
-                $item->longitude,
-                $item->altitude,
-                $item->user->name,
-                'solo georef.',
-                $item->calcolo_notturno,
-                $item->pic_link,
-                $item->note,
-            ];
-
-            $row++;
-        };
-
-        return DataTables::of($caditoie)
-        ->addIndexColumn()
-        ->addColumn('action', function($row) {
-            $actionBtn = 
-            '<a href="'.route('items.edit', $row).'" class="px-3 py-2 rounded me-3 bg-black text-white"><i class="fas fa-pen-to-square"></i></a>
-            <a href="'.route('items.destroy', $row).'" class="px-3 py-2 rounded bg-danger text-white" onclick="event.preventDefault(); if (confirm(\'Sei sicuro di voler eliminare questo comune?\')) { document.getElementById(\'delete-form\').submit(); }">
-                <i class="fa-solid fa-trash"></i>
-            </a>
-            <form id="delete-form" action="'.route('items.destroy', $row).'" method="POST" style="display: none;">
-                @csrf
-                @method(\'DELETE\')
-            </form>';
-
-            return $actionBtn;
-        })
-        ->rawColumns(['action'])
-        ->make(true);
-    }
-
-    private function getItems(FilteredDataRequest $request) 
+    /*private function getItems(FilteredDataRequest $request)
     {
 
         $clientId = $request->input('clientId');
@@ -214,22 +135,31 @@ class ItemController extends Controller
 
         $items = $query->orderBy('id', 'DESC')->get();
 
+        //QUI
         return $items;
-    }
+    }*/
 
-    public function createZipFileFromImg_Items(FilteredDataRequest $request) 
+    public function createZipFileFromImg_Items()
     {
-        $items = $this->getItems($request);
+
+        $ret['success'] = false;
+        $ret['data'] = [];
+
+        $items =  $filteredItemsSession = Session::get('filteredItems');
+        $filteredItems = Item::with('street', 'street.city', 'tags', 'user')
+                ->whereIn('id', $filteredItemsSession)
+                ->orderBy('id', 'DESC')
+                ->get();
 
         $zip = new ZipArchive;
 
         $zipFileName = '/downloads/' . time() . '.zip';
-        
+
         $zipFilePath = Storage::disk('img_items')->path($zipFileName);
 
         if ($zip->open($zipFilePath, ZipArchive::CREATE) === true) {
-            
-            foreach ($items as $item) {
+            foreach ($filteredItems as $item) {
+
                 // Recupera la cartella corrispondente al giorno dell'immagine
                 $dateTime = date('Ymd', strtotime($item->time_stamp_pulizia));
                 $folderPath = Storage::disk('img_items')->path('');
@@ -237,13 +167,62 @@ class ItemController extends Controller
                 // Recupera l'immagine
                 $imagePath = $folderPath . $dateTime . '/';
                 $relativeNameInZipFile = $item->pic;
-                $zip->addFile($imagePath . $item->pic , $relativeNameInZipFile);
+
+                //qua il controllo sull'immagine
+                if (file_exists($imagePath . $item->pic)) {
+                    $zip->addFile($imagePath . $item->pic, $relativeNameInZipFile);
+                } else {
+                    $ret['data'][] = $relativeNameInZipFile;
+                }
             }
             $zip->close();
-            return $imagePath;
+            if(!empty($ret['data'])) {
+                $ret['success'] = false;
+                $ret['message'] = 'Immagini non trovate!';
+            } else {
+                $ret['success'] = true;
+                $ret['message'] =  'File Zip generato con successo';
+                $ret['data'] = base64_encode(file_get_contents($zipFilePath));
+            }
+        } else {
+            $ret['message'] = 'Impossibile creare il file Zip';
         }
-        return null;
+        return json_encode($ret);
     }
+
+    public function deleteSewers()
+    {
+        $ret['success'] = false;
+
+        $ret['data']['cancellabile'] = [];
+        $ret['data']['non_cancellabile'] = [];
+
+        $ids = [];
+
+        $ids = Session::get('filteredItems');
+
+        $items = Item::whereIn('id', $ids)->get();
+
+        foreach($items as $item) {
+            if ($item->cancellabile == null) {
+                $item->cancellabile = Carbon::now()->setTimezone('Europe/Rome');
+                $item->save();
+                $ret['data']['cancellabile'][] = $item->id;
+            } else {
+                $ret['data']['non_cancellabile'][] = $item->id;
+            }
+        }
+
+        if (!empty($ret['data']['cancellabile'])) {
+            $ret['success'] = true;
+            $ret['message'] = 'Hai reso cancellabili alcune caditoie!';
+        } else {
+            $ret['message'] = 'Impossibile rendere cancellabili alcune caditoie!';
+        }
+
+        return json_encode($ret);
+    }
+
 
 
     // public function store(ItemRequest $request) : RedirectResponse
@@ -260,9 +239,9 @@ class ItemController extends Controller
     //     return redirect(route('pages.items.index'));
     // }
 
-    public function edit(Item $item)
+    public function edit(ItemsDataTable $dataTable, Item $item)
     {
-        $items = Item::with('street', 'street.city', 'tags', 'user')->orderBy('id', 'DESC')->paginate(50);
+        $items = Item::with('street', 'street.city', 'tags', 'user')->orderBy('id', 'DESC')->get();
         $comuni = City::all();
 
         $strada_caditoia =  Street::find($item->street_id);
@@ -291,38 +270,81 @@ class ItemController extends Controller
 
         $item->pic_link = $this->createLinkPathFromImg_Item($item);
 
-        return view('pages.Items.edit', compact('item', 'items', 'clients', 'operators', 'streets', 'comuni', 'tags', 'itemsDate', 'tagTypes', 'groupedTags', 'groupedTagsType'));
+        $filteredItemsSession = Session::get('filteredItems');
+        $prevItemId = null;
+        $nextItemId = null;
+
+        $currentIndex = array_search($item->id, $filteredItemsSession);
+        if ($currentIndex !== false) {
+            $prevItemId = ($currentIndex > 0) ? $filteredItemsSession[$currentIndex - 1] : null;
+            $nextItemId = ($currentIndex < count($filteredItemsSession) - 1) ? $filteredItemsSession[$currentIndex + 1] : null;
+        }
+
+        return view('pages.Items.edit', compact('item', 'items', 'clients', 'operators', 'streets', 'comuni', 'tags', 'itemsDate', 'tagTypes', 'groupedTags', 'groupedTagsType', 'prevItemId', 'nextItemId'));
     }
 
-    public function update(ItemRequest $request, Item $item) : RedirectResponse
+    public function view(ItemsDataTable $dataTable, Item $item)
+    {
+        $items = Item::with('street', 'street.city', 'tags', 'user')->orderBy('id', 'DESC')->get();
+        $comuni = City::all();
+
+        $strada_caditoia =  Street::find($item->street_id);
+
+        $streets = Street::with('city')->where('city_id',$strada_caditoia->city_id)->get();
+        $clients = User::join('role_user', 'users.id', '=', 'role_user.user_id')->join('roles', 'role_user.role_id', '=', 'roles.id')->where('roles.id', 3)->select('users.*')->get();
+        $tagTypes = Tag::where('domain', 'item')->distinct('type')->pluck('type');
+        $operators = User::join('role_user', 'users.id', '=', 'role_user.user_id')->join('roles', 'role_user.role_id', '=', 'roles.id')->where('roles.id', 2)->select('users.*')->get();
+        $itemsDate = Item::pluck('time_stamp_pulizia');
+
+
+        $tags = Tag::where('domain', 'item')->get();
+        $groupedTags = [];
+        foreach ($items as $el) {
+            $itemTags = $el->tags;
+            foreach ($itemTags as $tag) {
+                $type = $tag->type;
+                $groupedTags[$el->id][$type][] = $tag;
+            }
+        }
+
+        $groupedTagsType = [];
+        foreach ($tagTypes as $type) {
+            $tags = Tag::where('domain', 'item')->where('type', $type)->get();
+            $groupedTagsType[$type] = $tags;
+        }
+
+        $item->pic_link = $this->createLinkPathFromImg_Item($item);
+        $filteredItemsSession = Session::get('filteredItems');
+        $prevItemId = null;
+        $nextItemId = null;
+
+        $currentIndex = array_search($item->id, $filteredItemsSession);
+        if ($currentIndex !== false) {
+            $prevItemId = ($currentIndex > 0) ? $filteredItemsSession[$currentIndex - 1] : null;
+            $nextItemId = ($currentIndex < count($filteredItemsSession) - 1) ? $filteredItemsSession[$currentIndex + 1] : null;
+        }
+
+
+        return view('pages.Items.view', compact('item', 'items', 'clients', 'operators', 'streets', 'comuni', 'tags', 'itemsDate', 'tagTypes', 'groupedTags', 'groupedTagsType', 'prevItemId', 'nextItemId'));
+    }
+
+    public function update(ItemsDataTable $dataTable,ItemRequest $request, Item $item)
     {
         //$this->authorize('update', $item);
         $validated = $request->validated();
-        
+
         $street = Street::find($validated['street']);
         if($street) {
             $item->street()->associate($street)->save();
         }
-        
+
         $item->update($validated);
-        
+
         if(isset($validated['tags'])){
             $item->tags()->sync($validated['tags']);
         }
 
-        return to_route('items.index');
-    }
-
-    private function updateCancellabile($id)
-    {
-        $item = Item::find($id);
-        
-        if (empty($item->cancellabile)) {
-            $item->cancellabile = Carbon::now()->setTimezone('Europe/Rome');
-            return $item->save();
-        }
-
-        return false;
+        return $this->edit($dataTable,$item);
     }
 
     public function destroy(Item $item) : RedirectResponse
@@ -332,10 +354,10 @@ class ItemController extends Controller
         return redirect(route('pages.items.index'));
     }
 
-    // public function exportCSV() 
+    // public function exportCSV()
     // {
     //     $items = Item::with('street', 'street.city', 'tags', 'user')->orderBy('id', 'DESC')->get();
-        
+
     //     $fileName = 'caditoie.csv';
 
     //     $headers = array(
@@ -346,7 +368,7 @@ class ItemController extends Controller
     //         "Expires"             => "0"
     //     );
 
-        
+
     //     $columns = [
     //         "Comune",
     //         "Via",

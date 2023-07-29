@@ -5,28 +5,11 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Item extends Model
+class Caditoie extends Model
 {
     use HasFactory;
 
-    protected $fillable = [
-        'id_sd', 
-        'id_da_app',
-        'time_stamp_pulizia',
-        'civic',
-        'caditoie_equiv',
-        'latitude', 
-        'longitude', 
-        'altitude', 
-        'accuracy',
-        'height', 
-        'width', 
-        'user_id',
-        'street_id',
-        'depth', 
-        'pic', 
-        'note'
-    ];
+    protected $table = 'RWD_CADITOIE';
 
     public function street() {
         return $this->belongsTo(Street::class);

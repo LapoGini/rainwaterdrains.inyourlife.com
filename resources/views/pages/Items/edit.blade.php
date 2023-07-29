@@ -1,13 +1,15 @@
 @extends('layouts.app')
 @section('content')
-
-<div class="bg-white">
-    <h2 class="container mx-auto py-3">
-        Modifica 
-    </h2>
-</div>
-
 <div class="w-75 p-5 m-auto">
+    <div class="pb-5">
+        <a href="{{ $prevItemId ? route('items.edit', $prevItemId) : '#' }}" class="prevNext btn d-inline-flex rounded align-items-center text-decoration-none fw-bold bg-primary text-light border-0 py-2 px-3{{ $prevItemId ? '' : ' disabled' }}">
+            Precedente
+        </a>
+        <a href="{{ $nextItemId ? route('items.edit', $nextItemId) : '#' }}" class="prevNext btn d-inline-flex rounded align-items-center text-decoration-none fw-bold bg-primary text-light border-0 py-2 px-3{{ $nextItemId ? '' : ' disabled' }}">
+            Successivo
+        </a>
+    </div>
+
     <div class="row">
         <div class="col-6">
             <form action="{{ route('items.update', $item) }}" method="POST">
@@ -146,26 +148,38 @@
                         </select>
                     @endforeach
                 </div>
-                
-                <button type="submit" class="btn d-inline-flex rounded align-items-center text-decoration-none fw-bold bg-black text-light border-0 py-2 px-3">
-                    AGGIUNGI 
+
+                <button type="submit" class="btn btn-success d-inline-flex">
+                    Modifica
                 </button>
-                <a href="{{ route('items.index') }}" class="btn d-inline-flex rounded align-items-center text-decoration-none fw-bold bg-secondary text-light border-0 ms-3 py-2 px-3">
-                    Indietro
-                </a>                              
+                <a onclick="window.close()" class="btn btn-secondary d-inline-flex">
+                    Chiudi
+                </a>
             </form>
         </div>
         <div class="col-6">
-            <div class="img_caditoia">
+            <div class="img_caditoia mb-5">
                 <img src="{{ $item->pic_link }}" alt="">
             </div>
-
+            <div id="map" data-latitude="{{ $item->latitude }}" data-longitude="{{ $item->longitude }}" style="max-width: 100%; height: 300px"></div>
         </div>
     </div>
 </div>
 
 <script>
     $(document).ready(function() {
+        $('nav').hide();
+
+        var latitude = $('#map').data('latitude');
+        var longitude = $('#map').data('longitude');
+
+
+        $('.prevNext').click(function(e) {
+            if ($(this).hasClass('disabled')) {
+                e.preventDefault();
+            }
+        });
+
         $('#comune').change(function() {
             var selectedComune = $(this).val();
             $('#street').val('');
@@ -180,9 +194,25 @@
                 }
             });
         });
+        function initMap(latitude, longitude) {
+            var latLng = {lat: latitude, lng:  longitude};
+
+            var map = new google.maps.Map(document.getElementById('map'), {
+                center: latLng,
+                zoom: 14
+            });
+
+            // Aggiungere marker per la posizione
+            var marker = new google.maps.Marker({
+                position: latLng,
+                map: map
+            });
+        }
+        initMap(parseFloat(latitude), parseFloat(longitude));
     });
 </script>
 
 
 
 @endsection
+

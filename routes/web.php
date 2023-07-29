@@ -34,11 +34,18 @@ Route::resource('streets', StreetController::class)->only(['index', 'create', 'e
 Route::resource('cities', CityController::class)->only(['index', 'create', 'edit', 'store', 'update', 'destroy'])->middleware(['auth', 'verified', 'role:admin']);
 Route::resource('users', UserController::class)->only(['index', 'create', 'edit', 'store', 'update', 'destroy'])->middleware(['auth', 'verified', 'role:admin']);
 Route::resource('items', ItemController::class)->only(['index', 'create', 'edit', 'update', 'destroy'])->middleware(['auth', 'verified', 'role:admin']);
-Route::get('items/filterData', [ItemController::class, 'filterData'])->name('items.filterData')->middleware(['auth', 'verified', 'role:admin']);
+Route::get('/items/{item}/view', [ItemController::class, 'view'])->middleware(['auth', 'verified', 'role:admin']);
+
+//Route::get('items/filterData', [ItemController::class, 'filterData'])->name('items.filterData')->middleware(['auth', 'verified', 'role:admin']);
 Route::get('items/city_id/{client}', [ItemController::class, 'getHtmlCityByClient'])->name('items.city_id')->middleware(['auth', 'verified', 'role:admin']);
 Route::get('items/street/{city_id}', [ItemController::class, 'getHtmlStreetByCity'])->name('items.street')->middleware(['auth', 'verified', 'role:admin']);
 Route::get('/download-zip', [ItemController::class, 'createZipFileFromImg_Items'])->name('items.downloadZip')->middleware(['auth', 'verified', 'role:admin']);
-
+Route::get('/items/{item}/edit/previous', [ItemController::class, 'previous'])->name('items.previous')->middleware(['auth', 'verified', 'role:admin']);
+Route::get('/items/{item}/edit/next', [ItemController::class, 'next'])->name('items.next')->middleware(['auth', 'verified', 'role:admin']);
+Route::get('/items/deletable', [ItemController::class, 'deleteSewers'])->name('items.deleteSewers')->middleware(['auth', 'verified', 'role:admin']);
+Route::get('/crea-tabella-caditoie/{da}/{a}', [\App\Http\Controllers\CaditoieController::class, 'importaDati'])->middleware(['auth', 'verified', 'role:admin']);
+Route::get('/crea-tabella-comuni', [\App\Http\Controllers\ComuneController::class, 'importaDati'])->middleware(['auth', 'verified', 'role:admin']);
+Route::get('/crea-tabella-item_tag', [\App\Http\Controllers\ItemTagController::class, 'importaDati'])->middleware(['auth', 'verified', 'role:admin']);
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');

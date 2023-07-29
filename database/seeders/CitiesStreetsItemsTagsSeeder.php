@@ -37,19 +37,19 @@ class CitiesStreetsItemsTagsSeeder extends Seeder
             ],
             [
                 'name'        => 'Caditoia',
-                'type'        => 'Tipo Pozzetto',
+                'type'        => 'Tipologia',
                 'description' => '',
                 'domain'       => 'item',
             ],
             [
                 'name'        => 'Bocca di Lupo',
-                'type'        => 'Tipo Pozzetto',
+                'type'        => 'Tipologia',
                 'description' => '',
                 'domain'       => 'item',
             ],
             [
                 'name'        => 'Griglia',
-                'type'        => 'Tipo Pozzetto',
+                'type'        => 'Tipologia',
                 'description' => '',
                 'domain'       => 'item',
             ],

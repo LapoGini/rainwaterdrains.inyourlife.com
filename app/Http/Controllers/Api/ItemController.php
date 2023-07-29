@@ -416,7 +416,7 @@ class ItemController extends Controller
                     $caditoie[$row]['stato_nome']=$tag->name;
                 } else if ($tag->type=='Recapito'){
                     $caditoie[$row]['recapito_nome']=$tag->name;
-                } else if ($tag->type=='Tipo Pozzetto'){
+                } else if ($tag->type=='Tipologia'){
                     $caditoie[$row]['pozzetto_nome']=$tag->name;
                 }
             }
@@ -480,7 +480,7 @@ class ItemController extends Controller
                     $caditoie[$row]['stato_nome']=$tag->name;
                 } else if ($tag->type=='Recapito'){
                     $caditoie[$row]['recapito_nome']=$tag->name;
-                } else if ($tag->type=='Tipo Pozzetto'){
+                } else if ($tag->type=='Tipologia'){
                     $caditoie[$row]['pozzetto_nome']=$tag->name;
                 }
             }

@@ -23,7 +23,7 @@
     <link rel="stylesheet" href="//cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css">
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css">
     <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.3.6/css/buttons.dataTables.min.css">
-    
+
     <script src="//cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
     <script src="//cdn.datatables.net/buttons/2.3.6/js/dataTables.buttons.min.js"></script>
     <script src="//cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
@@ -31,11 +31,11 @@
     <script src="//cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js"></script>
     <script src="//cdn.datatables.net/buttons/2.3.6/js/buttons.html5.min.js"></script>
     <script src="//cdn.datatables.net/buttons/2.3.6/js/buttons.print.min.js"></script>
-    
-    <link rel="preload" as="style" href="https://geolocalizzazionezanetti.app/build/assets/app.e9ed2bd0.css">
-    <link rel="modulepreload" href="https://geolocalizzazionezanetti.app/build/assets/app.a032b13e.js">
-    <link rel="stylesheet" href="https://geolocalizzazionezanetti.app/build/assets/app.e9ed2bd0.css">
-    <script type="module" src="https://geolocalizzazionezanetti.app/build/assets/app.a032b13e.js"></script>
+
+    <link rel="preload" as="style" href="{{ env('APP_URL') }}/build/assets/app.e9ed2bd0.css">
+    <link rel="modulepreload" href="{{ env('APP_URL') }}/build/assets/app.a032b13e.js">
+    <link rel="stylesheet" href="{{ env('APP_URL') }}/build/assets/app.e9ed2bd0.css">
+    <script type="module" src="{{ env('APP_URL') }}/build/assets/app.a032b13e.js"></script>
 
     <!-- FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -57,13 +57,25 @@
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
+    <!-- Mappa GoogleMaps -->
+    <script src="https://maps.googleapis.com/maps/api/js?key={{ config('googlemap')['map_apikey'] }}"></script>
+
+
 </head>
 
 <body>
         @auth
-        
+
+        <div id="loading" style="display: none;" class="py-4">
+            <div class="loader">
+                <div class="loader-wheel"></div>
+                <div class="loader-text"></div>
+            </div>
+        </div>
+
+
         <nav class="navbar navbar-expand-md navbar-light shadow-sm px-5 py-2 bg-light">
-        
+
             <a class="navbar-brand d-flex align-items-center" href="{{ url('/') }}">
                 <div class="logo_laravel">
                     <img src="{{ asset('build/assets/logo-zanetti-ambiente-9d418d94.png') }}" alt="Logo" class="w-75">
@@ -74,10 +86,10 @@
                 <span class="navbar-toggler-icon"></span>
             </button>
 
-            
+
             <div class="collapse navbar-collapse" id="navbarSupportedContent">
                 <!-- Left Side Of Navbar -->
-                
+
                 <ul class="navbar-nav me-auto">
                     <li class="nav-item px-3">
                         <a class="nav-link" href="{{ route('items.index') }}"><i class="fas fa-grip-vertical"></i> {{ __('Caditoie') }}</a>
@@ -132,5 +144,25 @@
             @yield('content')
         </main>
 </body>
+
+<script>
+    $(document).ready(function() {
+            $(document).on('preXhr.dt', function (e, settings, data) {
+                $('#loading').show(); // Mostra l'indicatore di caricamento
+            });
+
+            $(document).on('xhr.dt', function (e, settings, json, xhr) {
+                $('#loading').hide(); // Nascondi l'indicatore di caricamento
+            });
+    });
+    var openedWindow;
+    function openwindow(width,height,url) {
+        if(openedWindow){
+            openedWindow.close();
+        }
+
+        openedWindow = window.open(url, "_blank", "toolbar=no,top=0,left=100,width="+width+",height="+height);
+    }
+</script>
 
 </html>

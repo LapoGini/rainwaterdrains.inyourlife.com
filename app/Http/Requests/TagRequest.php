@@ -15,7 +15,7 @@ class TagRequest extends FormRequest
     {
         return [
             'name' => 'required|string|max:100',
-            'description' => 'string|max:255',
+            'description' => 'nullable|string|max:255',
             'type' => 'required|string|max:100'
         ];
     }
