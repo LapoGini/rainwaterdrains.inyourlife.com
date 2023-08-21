@@ -25,7 +25,7 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 });
 
 //Route::post('register',[AuthController::class,'register']);
-Route::get('login',[AuthController::class,'login']);
+Route::post('login',[AuthController::class,'login']);
 Route::post('/setCaditoia', [ItemController::class, 'setCaditoia'])->name('api.items.setCaditoia');
 Route::post('/delete_caditoie', [ItemController::class, 'getCancellabili'])->name('api.items.getCancellabili');
 Route::post('/delete_caditoie_id', [ItemController::class, 'setDeleted'])->name('api.items.setDeleted');
@@ -44,6 +44,7 @@ Route::group(['middleware' => ['auth:api']], function () {
     Route::get('/tags/{domain}/{type}', [TagController::class, 'getByType'])->name('api.tags.type');
 
     Route::get('/cities', [CityController::class, 'getAll'])->name('api.cities.all');
+    Route::get('/cities/vie/{city_id}', [CityController::class, 'getViePerOgniComune'])->name('api.cities.vie');
 
     Route::get('/streets', [StreetController::class, 'getAll'])->name('api.streets.all');
 

@@ -30,17 +30,9 @@ class StreetController extends Controller
     }
 
     public function setVia(Request $request){
-        $data = $request->all()['data'];
-        $check=$this->checkUser($data['id_user'],$data['iduserhash']);
 
-        if ($check['result']){
-            $user=$check['user'];
-        } else {
-            $ret['result']=false;
-            $ret['error']=$check;
-            return response()->json($ret, 200);
-        }
-
+        $data = $request->all();
+    
         if (empty($data['nuova_strada'])) {
             $ret['result']=false;
             $ret['error']="Strada mancante!";
@@ -67,7 +59,7 @@ class StreetController extends Controller
 
         return response()->json([
             'comuni' => (new CityController)->getAll()->original['data'],
-            'vie' => (new CityController)->getViePerOgniComune()->original['data'],
+            'vie' => (new CityController)->getViePerOgniComune($data['comune_id'])->original['data'],
             'result' => true,
             'error' => '',
             'codicevia' => $nuova_strada->id,

@@ -27,13 +27,7 @@ class AuthController extends Controller
 
             return response()->json([
                 'result' => true, 
-                'user' => $user, 
-                'comuni' => (new CityController)->getAll()->original['data'], 
-                'vie' => (new CityController)->getViePerOgniComune()->original['data'],
-                'clienti' => (new UserController)->getByRole('cliente')->original['data'], 
-                'recapiti' => (new TagController)->getRecapiti()->original['data'], 
-                'stati' => (new TagController)->getStati()->original['data'], 
-                'pozzetti' => (new TagController)->getTipiPozzetto()->original['data']
+                'user' => $user,
             ], 200);
         }
 

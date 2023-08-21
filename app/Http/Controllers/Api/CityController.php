@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\City;
+use App\Models\Street;
 use Illuminate\Database\Eloquent\Builder;
 
 use App\Utils\Functions;
@@ -19,13 +20,11 @@ class CityController extends Controller
         return Functions::setResponse($cities, 'Città non trovate');
     }
 
-    public function getViePerOgniComune() 
+    public function getViePerOgniComune($city_id) 
     {
-        $vie=[];
-        $cities= City::orderBy('id', 'DESC')->get();
-        foreach ($cities as $comune){
-            $vie[$comune->id]= (new StreetController)->getByCityId($comune->id)->original['data'];
-        }        
-        return Functions::setResponse($vie, 'Vie non trovate');
+
+        //dd($city_id);
+        $streets = Street::where('city_id', $city_id)->get();
+        return Functions::setResponse($streets, 'Strade non trovate');
     }
 }

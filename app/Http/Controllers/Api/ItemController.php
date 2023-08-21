@@ -446,6 +446,7 @@ class ItemController extends Controller
      * @return json dati di tutte le caditoie filtrate
      */
     public function getCaditoieScansionatePerVia (Request $request){
+        var_dump('ciao');
         $data = $request->all()['data'];
         $check=$this->checkUser($data['id_user'],$data['iduserhash']);
 
