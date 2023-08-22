@@ -2,7 +2,7 @@
 @section('content')
 <div class="mx-5 pb-5 relative bg-white overflow-x-auto">
     <h2 class="py-3">
-        Tags
+        Tagsssss
     </h2>
     <a href="{{ route('tags.create', $domain) }}" class="d-inline-flex rounded align-items-center text-decoration-none fw-bold bg-black text-light border-0 py-2 px-3">
         AGGIUNGI <svg aria-hidden="true" focusable="false" data-prefix="fas" data-icon="plus" class="svg-inline--fa fa-plus ms-2 svg-plus" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512">

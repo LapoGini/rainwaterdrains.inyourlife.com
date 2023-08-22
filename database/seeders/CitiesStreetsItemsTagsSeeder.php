@@ -6,6 +6,8 @@ use App\Models\City;
 use App\Models\Item;
 use App\Models\Street;
 use App\Models\Tag;
+use App\Models\TagType;
+use App\Models\ItemTag;
 use App\Models\User;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
@@ -16,88 +18,93 @@ class CitiesStreetsItemsTagsSeeder extends Seeder
     public function run(): void
     {
 
+        $recapitoTagType = TagType::firstOrCreate(['name' => 'Recapito']);
+        $tipologiaTagType = TagType::firstOrCreate(['name' => 'Tipologia']);
+        $statoTagType = TagType::firstOrCreate(['name' => 'Stato']);
+        // aggiunti i tipi di tag presi dalla tabella tagTypes così da poterli definire dinamicamente all'interno di ogni tags
+
         $tags = [
             [
                 'name'        => 'Fognatura Bianca',
-                'type'        => 'Recapito',
+                'type'        => $recapitoTagType->id,
                 'description' => '',
                 'domain'       => 'item',
             ],
             [
                 'name'        => 'Fognatura Nera',
-                'type'        => 'Recapito',
+                'type'        => $recapitoTagType->id,
                 'description' => '',
                 'domain'       => 'item',
             ],
             [
                 'name'        => 'Fognatura Mista',
-                'type'        => 'Recapito',
+                'type'        => $recapitoTagType->id,
                 'description' => '',
                 'domain'       => 'item',
             ],
             [
                 'name'        => 'Caditoia',
-                'type'        => 'Tipologia',
+                'type'        => $tipologiaTagType->id,
                 'description' => '',
                 'domain'       => 'item',
             ],
             [
                 'name'        => 'Bocca di Lupo',
-                'type'        => 'Tipologia',
+                'type'        => $tipologiaTagType->id,
                 'description' => '',
                 'domain'       => 'item',
             ],
             [
                 'name'        => 'Griglia',
-                'type'        => 'Tipologia',
+                'type'        => $tipologiaTagType->id,
                 'description' => '',
                 'domain'       => 'item',
             ],
             [
                 'name'        => 'Funzionante',
-                'type'        => 'Stato',
+                'type'        => $statoTagType->id,
                 'description' => '',
                 'domain'       => 'item',
             ],
             [
                 'name'        => 'Rotta',
-                'type'        => 'Stato',
+                'type'        => $statoTagType->id,
                 'description' => '',
                 'domain'       => 'item',
             ],
             [
                 'name'        => 'Bloccata',
-                'type'        => 'Stato',
+                'type'        => $statoTagType->id,
                 'description' => '',
                 'domain'       => 'item',
             ],
             [
                 'name'        => 'Cemento',
-                'type'        => 'Stato',
+                'type'        => $statoTagType->id,
                 'description' => '',
                 'domain'       => 'item',
             ],
             [
                 'name'        => 'Radici',
-                'type'        => 'Stato',
+                'type'        => $statoTagType->id,
                 'description' => '',
                 'domain'       => 'item',
             ],
             [
                 'name'        => 'Non Scarica',
-                'type'        => 'Stato',
+                'type'        => $statoTagType->id,
                 'description' => '',
                 'domain'       => 'item',
             ],
             [
                 'name'        => 'Fondo Rotto',
-                'type'        => 'Stato',
+                'type'        => $statoTagType->id,
                 'description' => '',
                 'domain'       => 'item',
             ],
             [
                 'name'        => 'Macchina Sopra',
-                'type'        => 'Stato',
+                'type'        => $statoTagType->id,
                 'description' => '',
                 'domain'       => 'item',
             ],
@@ -108,7 +115,7 @@ class CitiesStreetsItemsTagsSeeder extends Seeder
         foreach ($tags as $tag) {
             $newtag->push(Tag::create([
                 'name'          => $tag['name'],
-                'type'          => $tag['type'],
+                'type_id'       => $tag['type'],
                 'description'   => $tag['description'],
                 'domain'        => $tag['domain'],
             ]));
@@ -138,7 +145,7 @@ class CitiesStreetsItemsTagsSeeder extends Seeder
         
         $items = Item::factory($num_elementi)->make([
             'user_id' => 2,
-            ])->each(function($item) use ($streets, $tags, $time_stamp_pulizie, $user_app, $lat_app, $long_app, $id_sd_values, $civic_values, $newtag) {
+            ])->each(function($item) use ($streets, $tags, $time_stamp_pulizie, $user_app, $lat_app, $long_app, $id_sd_values, $civic_values, $newtag, $recapitoTagType, $tipologiaTagType, $statoTagType) {
             $item->street()->associate($streets->random())->save();
 
             $time_stamp_pulizia = date('Y-m-d H:i:s', $time_stamp_pulizie[array_rand($time_stamp_pulizie)]);
@@ -146,7 +153,7 @@ class CitiesStreetsItemsTagsSeeder extends Seeder
             $item->id_da_app = $time_stamp_pulizia . "_" . $user_app[array_rand($user_app)] . "_" . $lat_app[array_rand($lat_app)] . "_" . $long_app[array_rand($long_app)];
             $item->time_stamp_pulizia = $time_stamp_pulizia;
 
-            
+
             $item->id_sd = $id_sd_values[array_rand($id_sd_values)];
             $item->civic = $civic_values[array_rand($civic_values)];
 
@@ -161,10 +168,23 @@ class CitiesStreetsItemsTagsSeeder extends Seeder
             $item->deleted_at = $deletedAt;
 
             $item->save();
+            
+            // Assegnazione casuale dei tag a ItemTag
+            $randomRecapitoTag = $newtag->where('type_id', $recapitoTagType->id)->random();
+            $randomTipologiaTag = $newtag->where('type_id', $tipologiaTagType->id)->random();
+            $randomStatoTag = $newtag->where('type_id', $statoTagType->id)->random();
 
-            $item->tags()->attach(
+            ItemTag::create([
+                'item_id'         => $item->id,
+                'recapito_tag_id' => $randomRecapitoTag->id,
+                'tipologia_tag_id' => $randomTipologiaTag->id,
+                'stato_tag_id'    => $randomStatoTag->id,
+            ]);
+
+            // rimuovere l'attach che fino ad ora avveniva dopo il salvataggio dell'item
+            /*$item->tags()->attach(
                 $newtag->where('domain', 'caditoie')->pluck('id')->toArray()
-            );
+            );*/
 
         });
     }

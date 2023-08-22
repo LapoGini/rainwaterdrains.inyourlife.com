@@ -15,7 +15,9 @@ return new class extends Migration
             $table->id();
             $table->string('name',100);
             $table->string('description')->nullable();
-            $table->string('type',100);
+            // rimuovere la colonna type
+            // $table->dropColumn('type');
+            $table->foreignId('type_id')->constrained('tag_types');
             $table->string('domain',100);
             $table->timestamps();
         });
@@ -29,3 +31,6 @@ return new class extends Migration
         Schema::dropIfExists('tags');
     }
 };
+
+// modificata la colonna type (stringa) per sostituirla con l'id della tipologia che arriva dalla tabella tag_types
+// ->constrained('tag_types');       Crea una chiave esterna a 'tag_types'
