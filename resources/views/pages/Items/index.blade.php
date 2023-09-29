@@ -77,12 +77,12 @@
                     <div class="mb-4">
                         @foreach($groupedTagsType as $type => $tags)
                             <label class="fw-light fst-italic d-block text-gray-700 text-sm font-bold mb-2">
-                                {{$type}}:
+                                {{ $types[$type] }}:
                             </label>
                             <div class="tag-box pb-4">
                                 @foreach($tags as $tag)
                                     <label for="tag_{{$tag->id}}" class="inline-flex items-center">
-                                        <input id="tag_{{$tag->id}}" name="{{$type}}[]" value="{{ $tag->id }}" type="checkbox" class="border-gray-300 rounded px-4 py-2 mr-2">
+                                        <input id="tag_{{$tag->id}}" name="tags[{{$type}}][]" value="{{ $tag->id }}" type="checkbox" class="border-gray-300 rounded px-4 py-2 mr-2">
                                         <span>{{ $tag->name }}</span>
                                     </label>
                                 @endforeach
@@ -183,12 +183,35 @@
 
 
 <script>
+    // funzione per eliminazione della caditoie
+    function destroy(url) {
+
+        $.ajax({
+            type: "GET",
+            url: url,
+            dataType: "json",
+            success: function (data) {
+                
+                if (data) {
+                    location.reload();
+
+                }
+                else {
+                    alert(data.msg);
+                }
+            },
+            error: function (jqXHR, textStatus, errorThrown) {
+                console.error('Errore AJAX:', textStatus, errorThrown);
+                alert("Si è verificato un errore! Riprova!");
+            }
+        });
+    }
+
     $(document).ready(function() {
         $('.select2').select2();
         $('#deletableButton').hide();
         hideDeletableButton();
         hideZipButton();
-
 
         // Prendere i filtri all'invio del form
         $('form').submit(function(event) {
@@ -249,7 +272,6 @@
                 });
             }
         });
-
         // funzione per nascondere i buttons
         function hideDownloadButtons() {
             $('.buttons-csv, .buttons-excel').hide();
@@ -279,7 +301,7 @@
             window.LaravelDataTables["zanetti-table-download"].ajax.url( '/items').load();
             $('#fromDate, #toDate').val('');
             $('#client, #comune, #street, #operator').val('').trigger('change.select2');
-            $('input[name="tags[]"]').prop('checked', false);
+            $('input[type="checkbox"]').prop('checked', false);
             $('#deletableButton').hide();
             hideDownloadButtons();
             hideDeletableButton();

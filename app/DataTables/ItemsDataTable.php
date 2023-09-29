@@ -6,24 +6,15 @@ use App\Models\ItemDataTableView;
 use Illuminate\Database\Eloquent\Builder as QueryBuilder;
 use Yajra\DataTables\EloquentDataTable;
 use Yajra\DataTables\Html\Builder as HtmlBuilder;
-use Yajra\DataTables\Html\Button;
 use Yajra\DataTables\Html\Column;
-use Yajra\DataTables\Html\Editor\Editor;
-use Yajra\DataTables\Html\Editor\Fields;
 use Carbon\Carbon;
 use Yajra\DataTables\Services\DataTable;
-use App\Models\Street;
-use App\Models\Tag;
-use App\Models\City;
-use App\Models\User;
-use App\Http\Requests\FilteredDataRequest;
+use App\Models\TagType;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Session;
-use Yajra\DataTables\Datatables;
 
 class ItemsDataTable extends DataTable
 {
-
     public $filteredItems = [];
 
     protected $allTagTypes;
@@ -31,7 +22,7 @@ class ItemsDataTable extends DataTable
     public function __construct()
     {
         parent::__construct();
-        $this->allTagTypes = DB::table('tags')->distinct()->pluck('type')->toArray();
+        $this->allTagTypes = DB::table('tags')->distinct()->pluck('type_id')->toArray();
     }
 
     /**
@@ -48,20 +39,24 @@ class ItemsDataTable extends DataTable
         $dataTable = (new EloquentDataTable($query, $searchValue))
             ->addColumn('action', function($item) {
                 $editUrl = url('items/' . $item->id . '/edit');
-                $viewUrl = url('items/' . $item->id . '/view');
-                $deleteUrl = url('items/' . $item->id);
+                $viewUrl = url('items/view/' . $item->id );
+                $deleteUrl = route('items.destroy', ['id' => $item->id]);
 
                 $actionBtn =
                 '
                 <a onclick="openwindow(1000,1500,\'' . $viewUrl . '\')" class="btn btn-success p-1"><i class="fas fa-search"></i> Vedi</a>
                 <a onclick="openwindow(1000,1500,\'' . $editUrl . '\')" class="btn btn-primary p-1"><i class="fas fa-edit"></i> Modifica</a>
-                <a href="' . $deleteUrl . '" class="btn btn-danger p-1" onclick="event.preventDefault(); if (confirm(\'Sei sicuro di voler eliminare questo comune?\')) { document.getElementById(\'delete-form-' . $item->id .'\').submit(); }">
+                <a 
+                    class="btn btn-danger delete_item p-1"
+                    title="Cancella"
+                    data-url="' . $deleteUrl . '"
+                    onclick="event.preventDefault(); if(confirm(\'Sei sicuro di voler eliminare questo comune?\')){ destroy(this.getAttribute(\'data-url\')) }"
+                    href="javascript:void(0)"
+                >
                     <i class="fa-solid fa-trash"></i> Cancella
                 </a>
-                <form id="delete-form-' . $item->id . '" action="' . $deleteUrl . '" method="POST" style="display: none;">
-                    @csrf
-                    @method(\'DELETE\')
-                </form>';
+
+                ';
 
                 return $actionBtn;
             })
@@ -105,8 +100,12 @@ class ItemsDataTable extends DataTable
 
         $searchValue = $this->request->input('search.value');
 
-        $query = $model->newQuery()
-                ->with(['street', 'street.city', 'user']);
+        //$itemDataTableView = new ItemDataTableView();
+        //$itemDataTableView->itemDataTableViewQuery();
+
+        $query = $model->newQuery();
+
+        
 
         $clientId = (isset($this->richiesta['client']) ? $this->richiesta['client'] : '');
         $comuneId = (isset($this->richiesta['comune']) ? $this->richiesta['comune'] : '');
@@ -115,7 +114,6 @@ class ItemsDataTable extends DataTable
         $toDateId = (isset($this->richiesta['toDate']) ? $this->richiesta['toDate'] : '');
         $operatorId = (isset($this->richiesta['operator']) ? $this->richiesta['operator'] : '');
         $selectedTags = (isset($this->richiesta['tags']) ? $this->richiesta['tags'] : '');
-
 
         if ($clientId) {
             $query->whereHas('street.city', function ($query) use ($clientId) {
@@ -147,35 +145,34 @@ class ItemsDataTable extends DataTable
             });
         }
 
-        $allTagTypes = DB::table('tags')->distinct()->pluck('type')->toArray();
-
         if($searchValue) {
             $query->where(function ($query) use ($searchValue) {
                 $query->where('street_nome', 'LIKE', '%' . $searchValue . '%')
                       ->orWhere('city_nome', 'LIKE', '%' . $searchValue . '%')
-                      ->orWhere('recapito', 'LIKE', '%' . $searchValue . '%')
-                      ->orWhere('tipologia', 'LIKE', '%' . $searchValue . '%')
-                      ->orWhere('stato', 'LIKE', '%' . $searchValue . '%')
                       ->orWhere('time_stamp_pulizia', 'LIKE', '%' . $searchValue . '%')
                       ->orWhere('user_nome', 'LIKE', '%' . $searchValue . '%')
                       ->orWhere('note', 'LIKE', '%' . $searchValue . '%');
+
+                    $tagType = DB::table('tag_types')->pluck('name');
+                    foreach($tagType as $tag) {
+                        $tagTypeStr = strtolower($tag);
+                        $query->orWhere($tagTypeStr, 'like', '%' . $searchValue . '%');
+                    }
             });
         }
 
-        /*if ($selectedTags) {
-            $query->where(function ($query) use ($selectedTags,$allTagTypes){*/
-                foreach($allTagTypes as $tagType) {
-                    if (isset($this->richiesta[$tagType])){
-                        $tagTypeString = $tagType . '_id';
-                        $query->whereIn($tagTypeString, $this->richiesta[$tagType]);
-                    }
+        if ($selectedTags) {
+            foreach ($selectedTags as $tagTypeId => $tags) {
+                $tagType = DB::table('tag_types')->where('id', $tagTypeId)->value('name');
+                $tagType = strtolower($tagType) . '_id';
+                foreach ($tags as $tagId) {
+                    $query->where($tagType, $tagId);
                 }
-        /*    });
-        }*/
+            }
+        }
 
         $this->filteredItems = $query->pluck('id')->toArray();
         Session::put('filteredItems', $this->filteredItems);
-
         return $query;
     }
 
@@ -208,9 +205,6 @@ class ItemsDataTable extends DataTable
                                         ['extend' => 'csv', 'text' => 'DOWNLOAD CSV','exportOptions' => ['columns' => 'th:not(:last-child)']],
                                         ['extend' => 'excel', 'text' => 'DOWNLOAD XLSX','exportOptions' => ['columns' => 'th:not(:last-child)']],
                                     ],
-                                    'columnDefs' => [
-                                        ['visible' => false, 'targets' => [0, 3, 7, 8, 9, 10, 11, 12, 14, 15, 16, 18, 19, 20]],
-                                    ],
                                     'initComplete' => 'function() {
                                         $(".buttons-csv, .buttons-excel").hide();
                                     }',
@@ -227,55 +221,70 @@ class ItemsDataTable extends DataTable
         $tagsArray = [Column::make('id')
         ->searchable(false),
         // mie colonne'items.id'
-        Column::make('street.name')->title('Via'),
-        Column::make('street.city.name')->title('Provincia'),
+        Column::make('street_nome')->title('Via'),
+        Column::make('city_nome')->title('Provincia'),
         Column::make('civic')->title('Civico')
-                ->searchable(false),
+                ->searchable(false)
+                ->visible(false),
         ];
 
-        foreach($this->allTagTypes as $TagType) {
-            $tagTypeTitle = ucfirst($TagType);
+        $types = TagType::pluck('name', 'id');
 
-            array_push($tagsArray, Column::make($TagType)->title($tagTypeTitle));
+        foreach($types as $type) {
+            $nameType = strtolower($type);
+
+            array_push($tagsArray, Column::make($nameType)->title($type));
         }
 
         return array_merge($tagsArray,
         [
 
             Column::make('height')->title('Lunghezza')
-                    ->searchable(false),
+                    ->searchable(false)
+                    ->visible(false),
             Column::make('width')->title('Larghezza')
-                    ->searchable(false),
+                    ->searchable(false)
+                    ->visible(false),
             Column::make('depth')->title('Profondità')
-                    ->searchable(false),
+                    ->searchable(false)
+                    ->visible(false),
             Column::make('volume')->title('Volume')
-                    ->searchable(false),
+                    ->searchable(false)
+                    ->visible(false),
             Column::make('area')->title('Area')
-                    ->searchable(false),
+                    ->searchable(false)
+                    ->visible(false),
             Column::make('caditoie_equiv')->title('Caditoie_equiv')
-                    ->searchable(false),
+                    ->searchable(false)
+                    ->visible(false),
             Column::make('time_stamp_pulizia')->title('Data Pulizia'),
             Column::make('latitude')->title('Latitudine')
-                    ->searchable(false),
+                    ->searchable(false)
+                    ->visible(false),
             Column::make('longitude')->title('Longitudine')
-                    ->searchable(false),
+                    ->searchable(false)
+                    ->visible(false),
             Column::make('altitude')->title('Altitudine')
-                    ->searchable(false),
-            Column::make('user.name')->title('Operatore'),
+                    ->searchable(false)
+                    ->visible(false),
+            Column::make('user_nome')->title('Operatore'),
             Column::make('solo_georef')->title('Solo_georef')
-                    ->searchable(false),
+                    ->searchable(false)
+                    ->visible(false),
             Column::make('eseguire_a_mano_in_notturno')->title('Eseguire_a_mano_in_notturno')
-                    ->searchable(false),
+                    ->searchable(false)
+                    ->visible(false),
             Column::make('link_fotografia')->title('link_foto')
-                    ->searchable(false),
+                    ->searchable(false)
+                    ->visible(false),
             Column::make('note')->title('note'),
 
             Column::computed('action')
-                  ->searchable(false)
-                  ->exportable(false)
-                  ->printable(false)
-                  ->width(300)
-                  ->addClass('text-center'),
+                    ->searchable(false)
+                    ->exportable(false)
+                    ->printable(false)
+                    ->width(300)
+                    ->addClass('text-center'),
         ]);
     }
 

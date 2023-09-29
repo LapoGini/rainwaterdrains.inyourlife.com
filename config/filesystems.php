@@ -47,7 +47,9 @@ return [
         'img_items' => [
             'driver' => 'local',
             'root' => env('IMG_FOLDERS'),
-            'url' => env('IMG_FOLDERS')
+            'url' => env('IMG_FOLDERS'),
+            'visibility' => 'public', // `private` = 0600, `public` = 0644
+            'directory_visibility' => 'public' // `private` = 0700, `public` = 0755
         ],
 
         's3' => [

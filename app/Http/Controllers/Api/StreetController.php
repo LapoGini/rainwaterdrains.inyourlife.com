@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Street;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use App\Models\User;
 
 use App\Utils\Functions;
@@ -14,6 +15,13 @@ class StreetController extends Controller
 {
 
     public function getAll()
+    {
+        $streets = Street::all();
+
+        return Functions::setResponse($streets, 'Strade non trovate');
+    }
+
+    public function getAllByCityId()
     {
         $streets = Street::with('city')->select('*','id as codice_via','name as strada_nome','city_id as comune_id')->orderBy('id', 'DESC')->get();
 
@@ -29,41 +37,46 @@ class StreetController extends Controller
         return Functions::setResponse($streets, 'Strade non trovate');
     }
 
-    public function setVia(Request $request){
-
+    public function setVia(Request $request)
+    {
         $data = $request->all();
+
+        if (empty($data['name'])) {
+            return response()->json(['result' => false, 'error' => "Strada mancante!"], 200);
+        }
     
-        if (empty($data['nuova_strada'])) {
-            $ret['result']=false;
-            $ret['error']="Strada mancante!";
-            return response()->json([$ret], 200);
+        if (empty($data['city_id'])) {
+            return response()->json(['result' => false, 'error' => "Comune mancante!"], 200);
         }
+    
+        return DB::transaction(function () use ($data) {
+            $strada = Street::where('name', $data['name'])
+                            ->where('city_id', $data['city_id'])
+                            ->lockForUpdate()  // Lock the selected rows
+                            ->first();
 
-        if (empty($data['comune_id'])) {
-            $ret['result']=false;
-            $ret['error']="Comune mancante!";
-            return response()->json([$ret], 200);
-        }
-
-        $strada=Street::where('name',$data['nuova_strada'])->where('city_id',$data['comune_id'])->get();
-        if ($strada->count()>0){
-            $ret['result']=false;
-            $ret['error']="Questa strada esiste già";
-            return response()->json([$ret], 200);
-        }
-
-        $nuova_strada=Street::create([
-            'name' => $data['nuova_strada'],
-            'city_id' => $data['comune_id'],
-        ]);
-
-        return response()->json([
-            'comuni' => (new CityController)->getAll()->original['data'],
-            'vie' => (new CityController)->getViePerOgniComune($data['comune_id'])->original['data'],
-            'result' => true,
-            'error' => '',
-            'codicevia' => $nuova_strada->id,
-        ], 200);
+            if ($strada) {
+                // Se la strada esiste già, aggiorniamo solo il valore di street_id_app
+                $strada->street_id_app = $data['id'];
+                $strada->save();
+            } else {
+                // Se la strada non esiste, la creiamo
+                $strada = Street::create([
+                    'name' => $data['name'],
+                    'city_id' => $data['city_id'],
+                    'street_id_app' => $data['id'],  // Vecchio id da App
+                ]);
+            }
+    
+            return response()->json([
+                'idOld' => $data['id'],
+                'idNew' => $strada->id,
+                'comuni' => (new CityController)->getAll()->original['data'],
+                'vie' => (new CityController)->getViePerOgniComune($data['city_id'])->original['data'],
+                'result' => true,
+                'error' => '',
+            ], 200);
+        }, 5);
     }
 
     private function checkUser($id_user,$iduserhash){

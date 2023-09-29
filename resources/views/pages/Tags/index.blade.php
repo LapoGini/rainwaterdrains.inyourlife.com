@@ -2,7 +2,7 @@
 @section('content')
 <div class="mx-5 pb-5 relative bg-white overflow-x-auto">
     <h2 class="py-3">
-        Tagsssss
+        Tags
     </h2>
     <a href="{{ route('tags.create', $domain) }}" class="d-inline-flex rounded align-items-center text-decoration-none fw-bold bg-black text-light border-0 py-2 px-3">
         AGGIUNGI <svg aria-hidden="true" focusable="false" data-prefix="fas" data-icon="plus" class="svg-inline--fa fa-plus ms-2 svg-plus" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512">
@@ -10,9 +10,9 @@
         </svg>
     </a>
 
-    @foreach ($tags as $type => $tagCollection)
+    @foreach ($tags as $type_id => $tagCollection)
 
-        <h2 class="text-3xl fst-italic fw-bold mt-5">{{$type}}</h2>
+        <h2 class="text-3xl fst-italic fw-bold mt-5">{{ $types[$type_id] }}</h2>
         
         <table id="zanetti-table" class="table table-striped table-hover w-100 text-sm text-left text-gray-500 dark:text-gray-400">
             <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">

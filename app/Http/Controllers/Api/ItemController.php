@@ -7,6 +7,8 @@ use App\Models\City;
 use App\Models\Item;
 use App\Models\Street;
 use App\Models\User;
+use App\Models\ItemTag;
+use App\Models\TagType;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
@@ -15,7 +17,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Carbon;
 
 use App\Utils\Functions;
-
+use Exception;
 use Illuminate\Support\Facades\Auth;
 
 class ItemController extends Controller
@@ -66,38 +68,59 @@ class ItemController extends Controller
 
     public function set(Request $request)
     {
-        $user = Auth::guard('api')->user();
         $data = $request->all();
 
-        $validator = Validator::make($data,[
-            'latitude'=> 'required|numeric',
-            'longitude'=> 'required|numeric',
-            'altitude'=> 'required|numeric',
-            'accuracy'=> 'required|numeric',
+        $validator = Validator::make($data, [
+            'user_id' => 'required|numeric|exists:users,id',
+            'latitude' => 'required|numeric',
+            'longitude' => 'required|numeric',
+            'altitude' => 'required|numeric',
+            'accuracy' => 'required|numeric',
             'pic' => 'string|nullable',
             'note' => 'string|nullable',
-            'height'=> 'required|numeric',
-            'width'=> 'required|numeric',
-            'depth'=> 'required|numeric',
-            'street_id'=> 'required|numeric',
-            'tagsIds' => 'array'
+            'height' => 'nullable|numeric',
+            'width' => 'nullable|numeric',
+            'depth' => 'nullable|numeric',
+            'street_id' => 'required|numeric',
+            'civico' => 'string|nullable',
+            'time_stamp_pulizia' => 'required|date_format:Y-m-d H:i:s',
+            'id_da_app' => 'required',
         ]);
 
         if($validator->fails()){
             return response()->json(['validation_errors' => $validator->messages()],201);
         }
 
-        $street = Street::find($data['street_id']);
+        $street = Street::where(function($query) use ($data) {
+            $query->where('street_id_app', $data['street_id'])
+                  ->orWhere('id', $data['street_id']);
+        })->first();
 
-        if($street) {
+        if (isset($street)) {
             $item = Item::make($data);
-            $item->street()->associate($street);
-            $item->user()->associate($user);
+            $item->street_id = $street->id;
+            $item->user_id = $data['user_id'];
             $item->save();
         }
-        if(isset($data['tagsIds'])){
-            $item->tags()->sync($data['tagsIds']);
+
+        if($data['tags'] !== null) {
+            $tags = json_decode($data['tags'], true);
+
+            $tagData = ['item_id' => $item->id];
+
+            foreach($tags as $tagId => $tagValue) {
+                $tagType = TagType::find($tagId);
+
+                if($tagType) {
+                    $columnName = $tagType->name . '_tag_id';
+                    $columnName = strtolower($columnName); 
+
+                    $tagData[$columnName] = $tagValue;
+                }
+            }
+            ItemTag::create($tagData);
         }
+
 
         return response()->json(['success' => $item], 200);
     }
@@ -114,7 +137,7 @@ class ItemController extends Controller
         $check=$this->checkUser($data['id_user'],$data['iduserhash']);
 
         if ($check['result']){
-            $user=$check['user'];
+            $user = $check['user'];
         } else {
             $ret['result']=false;
             $ret['error']=$check;
@@ -334,29 +357,39 @@ class ItemController extends Controller
 
         $ret['result']=true;
         $ret['id']=$item->id;
-
         return $ret;
-
     }
 
-    private function saveImage($imagedata,$imageName,$cartellaDelGiorno){
-        if(!Storage::disk('img_items')->exists($cartellaDelGiorno)) {
-            Storage::disk('img_items')->makeDirectory($cartellaDelGiorno, 0775, true);
-        }
+    public function saveImage(Request $request){
+        try {
+            $imagedata = $request->input('imagedata');
+            $imageName = $request->input('imageName');
+            $giorno = $request->input('cartellaDelGiorno');
+            $cartellaDelGiorno = str_replace( '-', '', $giorno);
 
-        $imagedata = str_replace('data:image/jpeg;base64,', '', $imagedata);
-        $imagedata = str_replace(' ', '+', $imagedata);
+            if(!Storage::disk('img_items')->exists($cartellaDelGiorno)) {
+                Storage::disk('img_items')->makeDirectory($cartellaDelGiorno, 0775, true);
+            }
 
-        if(Storage::disk('img_items')->exists($cartellaDelGiorno.$imageName.'.jpg')) {
-            Storage::disk('img_items')->put($cartellaDelGiorno.$imageName.'_'.date('His').'.jpg', base64_decode($imagedata));
-        } else {
-            Storage::disk('img_items')->put($cartellaDelGiorno.$imageName.'.jpg', base64_decode($imagedata));
+            if(str_contains($imagedata, 'data:image/jpeg;base64,')) {
+                $imagedata = str_replace('data:image/jpeg;base64,', '', $imagedata);
+                $imagedata = str_replace(' ', '+', $imagedata);
+            }
+            
+            if(Storage::disk('img_items')->exists($cartellaDelGiorno.'/'.$imageName)) {
+                Storage::disk('img_items')->put($cartellaDelGiorno.'/'.$imageName.'_'.date('His'), base64_decode($imagedata));
+
+            } else {
+                Storage::disk('img_items')->put($cartellaDelGiorno.'/'.$imageName, base64_decode($imagedata));
+            }
+            return response()->json($imagedata, 200);
+        } catch (Exception $e) {
+            return response()->json($e, 500);
         }
     }
 
     private function checkUser($id_user,$iduserhash){
-        $api_token=substr($iduserhash, 0, -1);
-        $api_token=substr($api_token, 1);
+        $api_token= $iduserhash;
 
         if (empty($id_user) || empty($api_token)){
             $ret['result']=false;
@@ -390,34 +423,42 @@ class ItemController extends Controller
     public function getCaditoieScansionate (Request $request){
 
         $data = $request->all()['data'];
-        $check=$this->checkUser($data['id_user'],$data['iduserhash']);
 
-        if ($check['result']){
-            $user=$check['user'];
-        } else {
-            $ret['result']=false;
-            $ret['error']=$check;
-            return response()->json($ret, 200);
-        }
+        $user = $data['user'] ?? null;
 
-        $giorno=$data['giorno'];
+        $giorno = $data['giorno']['_value'] ?? null; 
         if (empty($giorno)){
             $date = new \DateTime('now',new \DateTimeZone('Europe/Rome'));
             $giorno=$date->format('Y-m-d');
+        } else {
+            $date = \DateTime::createFromFormat('d/m/Y', $giorno);
+            $giorno = $date->format('Y-m-d');
         }
-        $items = Item::with('street', 'street.city', 'tags', 'user')->whereRaw('DATE_FORMAT(time_stamp_pulizia, "%Y-%m-%d")="'.$giorno.'"')->get();
+
+        $tagTypes = DB::table('tag_types')->pluck('name');
+
+        $tagKeys = $tagTypes->map(function ($tagName) {
+            return strtolower($tagName) . '_tag_id';
+        })->toArray();
+
+
+        $items = Item::with('street', 'street.city', 'user')
+            ->whereRaw('DATE_FORMAT(time_stamp_pulizia, "%Y-%m-%d")="'.$giorno.'"')
+            ->when($user, function ($query, $user) {
+                return $query->where('user_id', $user);
+            })
+            ->get();
+    
         $caditoie=[];
         $row=0;
-        $aggregato['Griglia']=$aggregato['Caditoia']=$aggregato['Bocca di Lupo']=0;
         foreach ($items as $i){
-            $itemTags = $i->tags;
-            foreach ($itemTags as $tag){
-                if ($tag->type=='Stato'){
-                    $caditoie[$row]['stato_nome']=$tag->name;
-                } else if ($tag->type=='Recapito'){
-                    $caditoie[$row]['recapito_nome']=$tag->name;
-                } else if ($tag->type=='Tipologia'){
-                    $caditoie[$row]['pozzetto_nome']=$tag->name;
+            $itemTags = DB::table('item_tag')->where('item_id', $i->id)->first();
+            foreach ($tagKeys as $tagKey) {
+                if ($itemTags && isset($itemTags->$tagKey)) {
+                    $tagName = DB::table('tags')
+                                 ->where('id', $itemTags->$tagKey)
+                                 ->value('name');
+                    $caditoie[$row][$tagKey] = $tagName;
                 }
             }
             $caditoie[$row]['data_caditoia']=$i->time_stamp_pulizia;
@@ -430,13 +471,12 @@ class ItemController extends Controller
             $caditoie[$row]['caditoie_altitude']=$i->altitude;
             $caditoie[$row]['foto_id']=env('APP_URL') . '/img_items/' . date('Ymd', strtotime($i->time_stamp_pulizia)) . '/' . $i->pic;
             $caditoie[$row]['caditoie_note']=$i->note;
-            $aggregato[$caditoie[$row]['pozzetto_nome']]++;
+            $caditoie[$row]['id']=$i->id;
             $row++;
         }
 
         $ret['result']=true;
         $ret['caditoie']=$caditoie;
-        $ret['aggregato'] = $aggregato;
         return response()->json($ret, 200);
     }
 
@@ -446,19 +486,11 @@ class ItemController extends Controller
      * @return json dati di tutte le caditoie filtrate
      */
     public function getCaditoieScansionatePerVia (Request $request){
-        var_dump('ciao');
         $data = $request->all()['data'];
-        $check=$this->checkUser($data['id_user'],$data['iduserhash']);
 
-        if ($check['result']){
-            $user=$check['user'];
-        } else {
-            $ret['result']=false;
-            $ret['error']=$check;
-            return response()->json($ret, 200);
-        }
+        $user_id = $data['user'] ?? null;
 
-        $giorniindietro=$data['giorniindietro'];
+        $giorniindietro = $data['giorniindietro'];
         $codicevia=$data['codice_via'];
         if (empty($giorniindietro)){
             $giorniindietro=7;
@@ -470,37 +502,26 @@ class ItemController extends Controller
             return response()->json($ret, 200);
         }
 
-        $items = Item::with('street', 'street.city', 'tags', 'user')->whereRaw('street_id='.$codicevia.' AND DATE_FORMAT(time_stamp_pulizia, "%Y-%m-%d")>="'.Carbon::now()->subDays($giorniindietro).'"')->get();
-
+        $items = Item::with('street', 'street.city', 'user')
+            ->where('street_id', $codicevia)
+            ->whereRaw('DATE_FORMAT(time_stamp_pulizia, "%Y-%m-%d") >= ?', [Carbon::now()->subDays($giorniindietro)->toDateString()])
+            ->when($user_id, function ($query, $user_id) {
+                return $query->where('user_id', $user_id);
+            })
+            ->get();
         $caditoie=[];
         $row=0;
         foreach ($items as $i){
-            $itemTags = $i->tags;
-            foreach ($itemTags as $tag){
-                if ($tag->type=='Stato'){
-                    $caditoie[$row]['stato_nome']=$tag->name;
-                } else if ($tag->type=='Recapito'){
-                    $caditoie[$row]['recapito_nome']=$tag->name;
-                } else if ($tag->type=='Tipologia'){
-                    $caditoie[$row]['pozzetto_nome']=$tag->name;
-                }
-            }
+            $caditoie[$row]['id']=$i->id;
             $caditoie[$row]['data_caditoia']=$i->time_stamp_pulizia;
-            $caditoie[$row]['caditoie_ubicazione']=$i->civic;
-            $caditoie[$row]['strada_nome']=$i->street->name;
-            $caditoie[$row]['caditoie_lat']=$i->latitude;
-            $caditoie[$row]['caditoie_lng']=$i->longitude;
-            $caditoie[$row]['caditoie_altitude']=$i->altitude;
-            $caditoie[$row]['foto_id']=env('APP_URL') . '/img_items/' . date('Ymd', strtotime($i->time_stamp_pulizia)) . '/' . $i->pic;
-            $caditoie[$row]['caditoie_note']=$i->note;
+            $caditoie[$row]['caditoie_civico']=$i->civic;
+            $caditoie[$row]['user']=$i->user->name;
             $row++;
         }
 
         $ret['result']=true;
         $ret['caditoie']=$caditoie;
         return response()->json($ret, 200);
-
-
     }
 
     public function testPostConBearer (Request $request){

@@ -34,14 +34,14 @@
         </div>
 
         <div class="mb-3">
-            <label for="type" class="form-label">Tipologia</label>
-            <select class="form-select form-select-lg mb-3 @error('type') is-invalid @enderror" id="type" name="type" aria-label=".form-select-lg example">
+            <label for="type_id" class="form-label">Tipologia</label>
+            <select class="form-select form-select-lg mb-3 @error('type_id') is-invalid @enderror" id="type_id" name="type_id" aria-label=".form-select-lg example">
                 <option class="text-body-tertiary" selected disabled>Seleziona...</option>
-                @foreach($tags as $type => $tagCollection)
-                    <option value="{{ $type }}" {{ (old('type') == $type) ? 'selected' : (($tag->type === $type) ? 'selected' : '') }}>{{ $type }}</option>
+                @foreach($types as $type_id => $tagType)
+                    <option value="{{ $type_id }}" {{ (old('type_id') == $type_id) ? 'selected' : (($tag->type_id === $type_id) ? 'selected' : '') }}>{{ $tagType }}</option>
                 @endforeach             
             </select>
-            @error('select')
+            @error('type_id')
             <div class="invalid-feedback">
             {{ $message }}
             </div>

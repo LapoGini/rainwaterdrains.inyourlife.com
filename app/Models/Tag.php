@@ -9,7 +9,7 @@ class Tag extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['name', 'description', 'domain'];
+    protected $fillable = ['name', 'description', 'type_id', 'domain'];
 
 
     public function items() {
@@ -25,3 +25,4 @@ class Tag extends Model
 // (un tag può avere un solo tagType)
 // es. Fognatura Bianca può essere solo Recapito
 // es. Radici può essere solo stato
+// Prendo il modale

@@ -10,6 +10,8 @@ use App\Models\City;
 use App\Models\Street;
 use App\Models\User;
 use App\Models\Tag;
+use App\Models\TagType;
+use App\Models\ItemTag;
 use App\DataTables\ItemsDataTable;
 use Carbon\Carbon;
 use ZipArchive;
@@ -24,8 +26,61 @@ class ItemController extends Controller
 {
     public function index(ItemsDataTable $dataTable, FilteredDataRequest $request)
     {
+        $types = TagType::pluck('name', 'id');
 
-        $items = Item::with('street', 'street.city', 'tags', 'user')->orderBy('id', 'DESC')->get();
+        //$itemModel = new Item;
+        
+        /*foreach($types as $typeId => $typeName) {
+            $relationName = camel_case($typeName) . 'Tags';
+            $relations[$relationName] = $itemModel->belongsToMany(Tag::class, 'item_tag', 'item_id', $typeName . '_tag_id')->as($relationName);
+        }*/
+
+        //$with = ['street', 'street.city', 'user'];
+
+        $items = Item::with('street', 'street.city', 'user')->orderBy('id', 'DESC')->get();
+
+        $itemsTag = DB::table('items AS i')
+                        ->select(
+                            'i.id AS id',
+                            'i.id_sd AS id_sd',
+                            'i.id_da_app AS id_da_app',
+                            'i.time_stamp_pulizia AS time_stamp_pulizia',
+                            'i.caditoie_equiv AS caditoie_equiv',
+                            'i.civic AS civic',
+                            'i.longitude AS longitude',
+                            'i.latitude AS latitude',
+                            'i.altitude AS altitude',
+                            'i.accuracy AS accuracy',
+                            'i.height AS height',
+                            'i.width AS width',
+                            'i.depth AS depth',
+                            'i.pic AS pic',
+                            'i.note AS note',
+                            'i.street_id AS street_id',
+                            's.name AS street_nome',
+                            'c.id AS city_id',
+                            'c.name AS city_nome',
+                            'u.name AS user_nome',
+                            'i.user_id AS user_id',
+                            'i.cancellabile AS cancellabile',
+                            'i.deleted_at AS deleted_at',
+                            'i.created_at AS created_at',
+                            'i.updated_at AS updated_at',
+                        )
+                        ->from('items AS i')
+                        ->join('streets AS s', 'i.street_id', '=', 's.id')
+                        ->join('cities AS c', 's.city_id', '=', 'c.id')
+                        ->join('users AS u', 'i.user_id', '=', 'u.id')
+                        ->leftJoin('item_tag AS it', 'i.id', '=', 'it.item_id');
+
+                        foreach($types as $type) {
+                            $tagType = strtolower($type);
+                            $tagTypeColumn = $tagType . '_tag_id';
+
+                            $itemsTag->leftJoin("tags AS $tagType", "$tagType.id", "=", "it.$tagTypeColumn");
+                            $itemsTag->addSelect("$tagType.name AS $tagType");
+                        }
+
 
         $selectedClient = request()->query('client');
         $selectedComune = request()->query('comune');
@@ -33,30 +88,21 @@ class ItemController extends Controller
         $comuni = City::join('users', 'cities.user_id', '=', 'users.id')->where('users.id',  $selectedClient)->get();
         $streets = Street::join('cities', 'cities.id', '=', 'streets.city_id')->join('users', 'cities.user_id', '=', 'users.id')->where('users.id', $selectedComune)->select('streets.*')->get();
         $clients = User::join('role_user', 'users.id', '=', 'role_user.user_id')->join('roles', 'role_user.role_id', '=', 'roles.id')->where('roles.id', 3)->select('users.*')->get();
-        $tagTypes = Tag::where('domain', 'item')->distinct('type')->pluck('type');
+        $tagTypes = Tag::where('domain', 'item')->distinct('type_id')->pluck('type_id');
         $operators = User::join('role_user', 'users.id', '=', 'role_user.user_id')->join('roles', 'role_user.role_id', '=', 'roles.id')->where('roles.id', 2)->select('users.*')->get();
         $itemsDate = Item::pluck('time_stamp_pulizia');
 
         $tags = Tag::where('domain', 'item')->get();
         $groupedTags = [];
 
-        foreach ($items as $item) {
-            $itemTags = $item->tags;
-
-            foreach ($itemTags as $tag) {
-                $type = $tag->type;
-                $groupedTags[$item->id][$type][] = $tag;
-            }
-        }
-
         $groupedTagsType = [];
         foreach ($tagTypes as $type) {
-            $tags = Tag::where('domain', 'item')->where('type', $type)->get();
+            $tags = Tag::where('domain', 'item')->where('type_id', $type)->get();
             $groupedTagsType[$type] = $tags;
         }
 
 
-        return $dataTable->with('richiesta', $request->all())->render('pages.Items.index', compact('items', 'clients', 'operators', 'streets', 'comuni', 'tags', 'itemsDate', 'tagTypes', 'groupedTags', 'groupedTagsType'));
+        return $dataTable->with('richiesta', $request->all())->render('pages.Items.index', compact('items', 'clients', 'operators', 'streets', 'comuni', 'tags', 'itemsDate', 'tagTypes', 'groupedTags', 'groupedTagsType', 'types'));
     }
 
     public function createLinkPathFromImg_Item($item) {
@@ -84,68 +130,13 @@ class ItemController extends Controller
         };
     }
 
-    /*private function getItems(FilteredDataRequest $request)
-    {
-
-        $clientId = $request->input('clientId');
-        $comuneId = $request->input('comuneId');
-        $streetId = $request->input('streetId');
-        $fromDateId = $request->input('fromDateId');
-        $toDateId = $request->input('toDateId');
-        $operatorId = $request->input('operatorId');
-        $selectedTags = $request->input('tags');
-
-        $query = Item::with('street', 'street.city', 'tags', 'user');
-
-        if ($clientId) {
-            $query->whereHas('street.city', function($query) use ($clientId) {
-                $query->where('user_id', $clientId);
-            });
-        }
-
-        if ($comuneId) {
-            $query->whereHas('street.city', function($query) use ($comuneId) {
-                $query->where('id', $comuneId);
-            });
-        }
-
-        if ($streetId) {
-            $query->whereHas('street', function($query) use ($streetId) {
-                $query->where('id', $streetId);
-            });
-        }
-
-        if ($fromDateId && $toDateId) {
-            $fromDateId = new Carbon($fromDateId);
-            $toDateId = new Carbon($toDateId);
-            $query->whereBetween('time_stamp_pulizia', [$fromDateId->startOfDay(),  $toDateId->endOfDay()]);
-        }
-
-        if ($operatorId) {
-            $query->whereHas('user', function($query) use ($operatorId) {
-                $query->where('id', $operatorId);
-            });
-        }
-
-        if ($selectedTags) {
-            $query->whereHas('tags', function($query) use ($selectedTags) {
-                $query->whereIn('tags.id', $selectedTags);
-            });
-        }
-
-        $items = $query->orderBy('id', 'DESC')->get();
-
-        //QUI
-        return $items;
-    }*/
-
     public function createZipFileFromImg_Items()
     {
 
         $ret['success'] = false;
         $ret['data'] = [];
 
-        $items =  $filteredItemsSession = Session::get('filteredItems');
+        $filteredItemsSession = Session::get('filteredItems');
         $filteredItems = Item::with('street', 'street.city', 'tags', 'user')
                 ->whereIn('id', $filteredItemsSession)
                 ->orderBy('id', 'DESC')
@@ -223,48 +214,67 @@ class ItemController extends Controller
         return json_encode($ret);
     }
 
+    public function view(ItemsDataTable $dataTable, Item $item)
+    {
+        $types = TagType::pluck('name', 'id');
+        $tagData = [];
 
+        foreach($types as $typeId => $type) {
+            $columnName = strtolower($type);
 
-    // public function store(ItemRequest $request) : RedirectResponse
-    // {
-    //     $validated = $request->validated();
-    //     $street = Street::find($validated['street_id']);
-    //     if($street) {
-    //         $item = Item::create($validated);
-    //         $item->street()->associate($street)->save();
-    //     }
-    //     if(isset($validated['tagsIds'])){
-    //         $item->tags()->sync($validated['tagsIds']);
-    //     }
-    //     return redirect(route('pages.items.index'));
-    // }
+            $tags = Tag::where('type_id', $typeId)->get();
+            $tagData[$typeId] = $tags;
+        }
+
+        $item->pic_link = $this->createLinkPathFromImg_Item($item);
+        $filteredItemsSession = Session::get('filteredItems');
+        $prevItemId = null;
+        $nextItemId = null;
+
+        $currentIndex = array_search($item->id, $filteredItemsSession);
+        if ($currentIndex !== false) {
+            $prevItemId = ($currentIndex > 0) ? $filteredItemsSession[$currentIndex - 1] : null;
+            $nextItemId = ($currentIndex < count($filteredItemsSession) - 1) ? $filteredItemsSession[$currentIndex + 1] : null;
+        }
+    
+
+        $itemDataFromView = DB::table('item_data_table_views')->where('id', $item->id)->first();
+
+        return view('pages.Items.view', compact('itemDataFromView', 'prevItemId', 'nextItemId' ,'item', 'types', 'tagData', 'columnName'));
+    }
 
     public function edit(ItemsDataTable $dataTable, Item $item)
     {
-        $items = Item::with('street', 'street.city', 'tags', 'user')->orderBy('id', 'DESC')->get();
+
+        $types = TagType::pluck('name', 'id');
+        $tagData = [];
+
+        foreach($types as $typeId => $type) {
+            $columnName = strtolower($type) . '_tag_id';
+
+            $tags = Tag::where('type_id', $typeId)->get();
+            $tagData[$typeId] = $tags;
+        }
+
+        $items = Item::with('street', 'street.city', 'user')->orderBy('id', 'DESC')->get();
+
         $comuni = City::all();
 
         $strada_caditoia =  Street::find($item->street_id);
 
         $streets = Street::with('city')->where('city_id',$strada_caditoia->city_id)->get();
         $clients = User::join('role_user', 'users.id', '=', 'role_user.user_id')->join('roles', 'role_user.role_id', '=', 'roles.id')->where('roles.id', 3)->select('users.*')->get();
-        $tagTypes = Tag::where('domain', 'item')->distinct('type')->pluck('type');
+        $tagTypes = Tag::where('domain', 'item')->distinct('type_id')->pluck('type_id');
         $operators = User::join('role_user', 'users.id', '=', 'role_user.user_id')->join('roles', 'role_user.role_id', '=', 'roles.id')->where('roles.id', 2)->select('users.*')->get();
         $itemsDate = Item::pluck('time_stamp_pulizia');
 
-        $tags = Tag::where('domain', 'item')->get();
+        $currentTags = DB::table('item_tag')->where('item_id', $item->id)->first();
+
         $groupedTags = [];
-        foreach ($items as $el) {
-            $itemTags = $el->tags;
-            foreach ($itemTags as $tag) {
-                $type = $tag->type;
-                $groupedTags[$el->id][$type][] = $tag;
-            }
-        }
 
         $groupedTagsType = [];
         foreach ($tagTypes as $type) {
-            $tags = Tag::where('domain', 'item')->where('type', $type)->get();
+            $tags = Tag::where('domain', 'item')->where('type_id', $type)->get();
             $groupedTagsType[$type] = $tags;
         }
 
@@ -280,138 +290,56 @@ class ItemController extends Controller
             $nextItemId = ($currentIndex < count($filteredItemsSession) - 1) ? $filteredItemsSession[$currentIndex + 1] : null;
         }
 
-        return view('pages.Items.edit', compact('item', 'items', 'clients', 'operators', 'streets', 'comuni', 'tags', 'itemsDate', 'tagTypes', 'groupedTags', 'groupedTagsType', 'prevItemId', 'nextItemId'));
+        return view('pages.Items.edit', compact('currentTags', 'columnName', 'tagData', 'item', 'items', 'clients', 'operators', 'streets', 'comuni', 'tags', 'types', 'itemsDate', 'tagTypes', 'groupedTags', 'groupedTagsType', 'prevItemId', 'nextItemId'));
     }
 
-    public function view(ItemsDataTable $dataTable, Item $item)
+    public function update(ItemsDataTable $dataTable, ItemRequest $request, Item $item)
     {
-        $items = Item::with('street', 'street.city', 'tags', 'user')->orderBy('id', 'DESC')->get();
-        $comuni = City::all();
-
-        $strada_caditoia =  Street::find($item->street_id);
-
-        $streets = Street::with('city')->where('city_id',$strada_caditoia->city_id)->get();
-        $clients = User::join('role_user', 'users.id', '=', 'role_user.user_id')->join('roles', 'role_user.role_id', '=', 'roles.id')->where('roles.id', 3)->select('users.*')->get();
-        $tagTypes = Tag::where('domain', 'item')->distinct('type')->pluck('type');
-        $operators = User::join('role_user', 'users.id', '=', 'role_user.user_id')->join('roles', 'role_user.role_id', '=', 'roles.id')->where('roles.id', 2)->select('users.*')->get();
-        $itemsDate = Item::pluck('time_stamp_pulizia');
-
-
-        $tags = Tag::where('domain', 'item')->get();
-        $groupedTags = [];
-        foreach ($items as $el) {
-            $itemTags = $el->tags;
-            foreach ($itemTags as $tag) {
-                $type = $tag->type;
-                $groupedTags[$el->id][$type][] = $tag;
-            }
-        }
-
-        $groupedTagsType = [];
-        foreach ($tagTypes as $type) {
-            $tags = Tag::where('domain', 'item')->where('type', $type)->get();
-            $groupedTagsType[$type] = $tags;
-        }
-
-        $item->pic_link = $this->createLinkPathFromImg_Item($item);
-        $filteredItemsSession = Session::get('filteredItems');
-        $prevItemId = null;
-        $nextItemId = null;
-
-        $currentIndex = array_search($item->id, $filteredItemsSession);
-        if ($currentIndex !== false) {
-            $prevItemId = ($currentIndex > 0) ? $filteredItemsSession[$currentIndex - 1] : null;
-            $nextItemId = ($currentIndex < count($filteredItemsSession) - 1) ? $filteredItemsSession[$currentIndex + 1] : null;
-        }
-
-
-        return view('pages.Items.view', compact('item', 'items', 'clients', 'operators', 'streets', 'comuni', 'tags', 'itemsDate', 'tagTypes', 'groupedTags', 'groupedTagsType', 'prevItemId', 'nextItemId'));
-    }
-
-    public function update(ItemsDataTable $dataTable,ItemRequest $request, Item $item)
-    {
-        //$this->authorize('update', $item);
         $validated = $request->validated();
-
+        
+        // Associare la strada se esiste
         $street = Street::find($validated['street']);
-        if($street) {
-            $item->street()->associate($street)->save();
+        if ($street) {
+            $item->street()->associate($street);
         }
 
+        $tagsUpdate = [];
+        $types = TagType::pluck('name', 'id');
+
+        foreach ($types as $typeId => $type) {
+            $tagTypeColumn = strtolower($type) . '_tag_id';
+            $tagsUpdate[$tagTypeColumn] = $validated[$tagTypeColumn];
+        }
+
+        $itemTag = ItemTag::where('item_id', $item->id)->first();
+
+        if($itemTag) {
+            // Aggiornare la tabella item_tag se esiste
+            $itemTag->update($tagsUpdate);
+        } else {
+            // Creare una nuova riga in item_tag se non esiste
+            $tagsUpdate['item_id'] = $item->id; // assicurati di aggiungere l'item_id alla creazione
+            ItemTag::create($tagsUpdate);
+        }
+        
+
+        // Aggiornare la tabella item_tag
+        // Usare Eloquent perchè va a prnendere i fillable e traduce null in set_null
+        //ItemTag::where('item_id', $item->id)->update($tagsUpdate);
+        // Con DB:: null lo riconosce come una stringa e non lo va ad inserire nel database
+        //DB::table('item_tag')->where('item_id', $item->id)->update($tagsUpdate);
+
+        // Aggiornare l'oggetto item
         $item->update($validated);
 
-        if(isset($validated['tags'])){
-            $item->tags()->sync($validated['tags']);
-        }
-
-        return $this->edit($dataTable,$item);
+        return to_route('items.index', $item);
     }
 
-    public function destroy(Item $item) : RedirectResponse
+
+    public function destroy($id)
     {
-        //$this->authorize('delete', $item);
-        $item->delete();
-        return redirect(route('pages.items.index'));
+        return Item::find($id)->delete();
     }
 
-    // public function exportCSV()
-    // {
-    //     $items = Item::with('street', 'street.city', 'tags', 'user')->orderBy('id', 'DESC')->get();
-
-    //     $fileName = 'caditoie.csv';
-
-    //     $headers = array(
-    //         "Content-type"        => "text/csv",
-    //         "Content-Disposition" => "attachment; filename=$fileName",
-    //         "Pragma"              => "no-cache",
-    //         "Cache-Control"       => "must-revalidate, post-check=0, pre-check=0",
-    //         "Expires"             => "0"
-    //     );
-
-
-    //     $columns = [
-    //         "Comune",
-    //         "Via",
-    //         "Lunghezza[L]",
-    //         "Larghezza[S]",
-    //         "Profondita[P]",
-    //         "Volume",
-    //         "Rapporto L/S",
-    //         "Latitudine",
-    //         "Longitudine",
-    //         "Altitudine",
-    //         "Punto su mappa",
-    //         "Data",
-    //         "Note",
-    //         "FotoFile"
-    //     ];
-
-    //     $callback = function() use($items, $columns) {
-    //         $file = fopen('php://output', 'w');
-    //         fputcsv($file, $columns);
-
-    //         foreach ($items as $item) {
-    //             $row['Comune'] = $item->street->city->name;
-    //             $row['Via'] = $item->street->name;
-    //             $row['Lunghezza[L]'] = $item->height;
-    //             $row['Larghezza[S]'] = $item->width;
-    //             $row['Profondita[P]'] = $item->depth;
-    //             $row['Volume'] = $item->height*$item->width*$item->depth;
-    //             $row['Rapporto L/S'] = $item->height/$item->width;
-    //             $row['Latitudine'] = $item->latitude;
-    //             $row['Longitudine'] = $item->longitude;
-    //             $row['Altitudine'] = $item->altitude;
-    //             $row['Punto su mappa'] = `https://www.google.it/maps?q=$item->latitude,$item->longitude`;
-    //             $row['Data'] = $item->created_at;
-    //             $row['Note'] = $item->note;
-    //             $row['FotoFile'] = `https://geolocalizzazionezanetti.it/RWD/files/$item->id/$item->pic`;
-
-    //             fputcsv($file, array($row['Title'], $row['Assign'], $row['Description'], $row['Start Date'], $row['Due Date']));
-    //         }
-
-    //         fclose($file);
-    //     };
-
-    //     return response()->stream($callback, 200, $headers);
-    // }
+    
 }

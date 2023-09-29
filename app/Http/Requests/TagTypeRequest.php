@@ -4,7 +4,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class TagRequest extends FormRequest
+class TagTypeRequest extends FormRequest
 {
     public function authorize(): bool
     {
@@ -15,8 +15,6 @@ class TagRequest extends FormRequest
     {
         return [
             'name' => 'required|string|max:100',
-            'description' => 'nullable|string|max:255',
-            'type_id' => 'required|numeric'
         ];
     }
 }

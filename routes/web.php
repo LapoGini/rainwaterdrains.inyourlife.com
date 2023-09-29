@@ -29,12 +29,14 @@ Route::get('/dashboard', function () {
     return view('dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
 
+Route::post('{domain}/tags/addNewTag', [TagController::class, 'addNewTag'])->name('addNewTag')->middleware(['auth', 'verified', 'role:admin']);
 Route::resource('{domain}/tags', TagController::class)->only(['index', 'create', 'edit', 'store', 'update', 'destroy'])->middleware(['auth', 'verified', 'role:admin']);
 Route::resource('streets', StreetController::class)->only(['index', 'create', 'edit', 'store', 'update', 'destroy'])->middleware(['auth', 'verified', 'role:admin']);
 Route::resource('cities', CityController::class)->only(['index', 'create', 'edit', 'store', 'update', 'destroy'])->middleware(['auth', 'verified', 'role:admin']);
 Route::resource('users', UserController::class)->only(['index', 'create', 'edit', 'store', 'update', 'destroy'])->middleware(['auth', 'verified', 'role:admin']);
-Route::resource('items', ItemController::class)->only(['index', 'create', 'edit', 'update', 'destroy'])->middleware(['auth', 'verified', 'role:admin']);
-Route::get('/items/{item}/view', [ItemController::class, 'view'])->middleware(['auth', 'verified', 'role:admin']);
+Route::resource('items', ItemController::class)->only(['index', 'create', 'edit', 'update'])->middleware(['auth', 'verified', 'role:admin']);
+Route::get('items/{id}', [ItemController::class, 'destroy'])->name('items.destroy')->middleware(['auth', 'verified', 'role:admin']);
+Route::get('/items/view/{item}', [ItemController::class, 'view'])->name('items.view')->middleware(['auth', 'verified', 'role:admin']);
 
 //Route::get('items/filterData', [ItemController::class, 'filterData'])->name('items.filterData')->middleware(['auth', 'verified', 'role:admin']);
 Route::get('items/city_id/{client}', [ItemController::class, 'getHtmlCityByClient'])->name('items.city_id')->middleware(['auth', 'verified', 'role:admin']);

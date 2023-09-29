@@ -126,7 +126,7 @@ class CitiesStreetsItemsTagsSeeder extends Seeder
             $street->city()->associate($cities->random())->save();
         });
 
-        $num_elementi=10;
+        $num_elementi=10000;
         //valori casuali per id_sd
         $id_sd_values = ['ABC123', 'DEF456', 'GHI789', 'JKL012', 'MNO345', 'PQR678', 'STU901', 'VWX234', 'YZA567', 'BCD890'];
 
@@ -180,11 +180,6 @@ class CitiesStreetsItemsTagsSeeder extends Seeder
                 'tipologia_tag_id' => $randomTipologiaTag->id,
                 'stato_tag_id'    => $randomStatoTag->id,
             ]);
-
-            // rimuovere l'attach che fino ad ora avveniva dopo il salvataggio dell'item
-            /*$item->tags()->attach(
-                $newtag->where('domain', 'caditoie')->pluck('id')->toArray()
-            );*/
 
         });
     }

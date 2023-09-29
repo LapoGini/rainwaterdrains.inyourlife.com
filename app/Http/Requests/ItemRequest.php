@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use App\Models\TagType;
 
 class ItemRequest extends FormRequest
 {
@@ -22,7 +23,7 @@ class ItemRequest extends FormRequest
      */
     public function rules(): array
     {
-        return [
+        $validatedItems = [
             'name' => 'required|string',
             'comune' => 'required',
             'latitude' => 'required|numeric',
@@ -32,11 +33,22 @@ class ItemRequest extends FormRequest
             'street' => 'required|string',
             'note' => 'nullable|string',
             'civic' => 'required|numeric',
-            'height' => 'required|numeric',
-            'width' => 'required|numeric',
-            'depth' => 'required|numeric',
-            'tags' => 'nullable|array',
-            'tags.*' => 'exists:tags,id',
+            'height' => 'nullable|numeric',
+            'width' => 'nullable|numeric',
+            'depth' => 'nullable|numeric',
         ];
+
+        $types = TagType::pluck('name', 'id');
+
+        $validatedTagTypes = [];
+
+        foreach ($types as $typeName) {
+            $columnName = strtolower($typeName) . '_tag_id';
+            $validatedTagTypes[$columnName] = 'nullable';
+        }
+
+        $result = array_merge($validatedItems, $validatedTagTypes);
+
+        return $result;
     }
 }

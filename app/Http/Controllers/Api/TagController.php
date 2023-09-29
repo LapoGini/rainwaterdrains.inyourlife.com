@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\DB;
 use App\Models\Tag;
 use Illuminate\Database\Eloquent\Builder;
 
@@ -11,6 +12,40 @@ use App\Utils\Functions;
 class TagController extends Controller
 {
 
+    public function getAll(string $domain) 
+    {
+        $results = DB::table('tags')
+            ->join('tag_types as tt', 'tags.type_id', '=', 'tt.id')
+            ->where('tags.domain', $domain)
+            ->select(
+                'tags.id as tag_id',
+                'tags.name as tag_name',
+                'tags.description',
+                'tags.domain',
+                'tt.id as tag_type_id',
+                'tt.name as tag_type_name'
+            )
+            ->get();
+
+        $groupedResults = $results->groupBy('tag_type_name')->map(function ($group) {
+            return [
+                'tag_type_id' => $group->first()->tag_type_id,
+                'tag_type_name' => $group->first()->tag_type_name,
+                'tags' => $group->map(function ($item) {
+                    return [
+                        'tag_id' => $item->tag_id,
+                        'tag_name' => $item->tag_name,
+                        'description' => $item->description,
+                        'domain' => $item->domain,
+                    ];
+                })->values()
+            ];
+        })->values();
+        
+        return Functions::setResponse($groupedResults, 'Tags non trovati');
+    }
+
+/*
     public function getAll(string $domain) 
     {
         $tags = Tag::where('domain', $domain)->orderBy('id', 'DESC')->get()->groupBy('type');
@@ -45,4 +80,5 @@ class TagController extends Controller
 
         return Functions::setResponse($tags, 'Nessun Tipologia Trovato');
     }
+*/
 }

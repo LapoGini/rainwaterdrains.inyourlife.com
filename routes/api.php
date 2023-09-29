@@ -29,11 +29,10 @@ Route::post('login',[AuthController::class,'login']);
 Route::post('/setCaditoia', [ItemController::class, 'setCaditoia'])->name('api.items.setCaditoia');
 Route::post('/delete_caditoie', [ItemController::class, 'getCancellabili'])->name('api.items.getCancellabili');
 Route::post('/delete_caditoie_id', [ItemController::class, 'setDeleted'])->name('api.items.setDeleted');
-Route::post('/scansioni/', [ItemController::class, 'getCaditoieScansionate'])->name('api.items.getCaditoieScansionate');
-Route::post('/scansioniPerVia/', [ItemController::class, 'getCaditoieScansionatePerVia'])->name('api.items.getCaditoieScansionatePerVia');
 Route::post('/aggiungiVia', [StreetController::class, 'setVia'])->name('api.streets.setVia');
 
-Route::group(['middleware' => ['auth:api']], function () {
+
+Route::group(['middleware' => ['auth:api']], function ($e) {
     Route::post('logout', [AuthController::class, 'logout']);
 
     Route::get('/users', [UserController::class, 'getAll'])->name('api.users.all');
@@ -46,8 +45,16 @@ Route::group(['middleware' => ['auth:api']], function () {
     Route::get('/cities', [CityController::class, 'getAll'])->name('api.cities.all');
     Route::get('/cities/vie/{city_id}', [CityController::class, 'getViePerOgniComune'])->name('api.cities.vie');
 
-    Route::get('/streets', [StreetController::class, 'getAll'])->name('api.streets.all');
+    Route::get('/streets', [StreetController::class, 'getAllByCityId'])->name('api.streets.allById');
+    Route::get('/allStreets', [StreetController::class, 'getAll'])->name('api.streets.all');
+
 
     Route::get('/items', [ItemController::class, 'getAll'])->name('api.items.all');
     Route::post('/item', [ItemController::class, 'set'])->name('api.items.set');
+
+    
+    Route::post('/scansioni', [ItemController::class, 'getCaditoieScansionate'])->name('api.items.getCaditoieScansionate');
+    Route::post('/scansioniPerVia', [ItemController::class, 'getCaditoieScansionatePerVia'])->name('api.items.getCaditoieScansionatePerVia');
+
+    Route::post('/saveImage', [ItemController::class, 'saveImage'])->name('api.items.saveImage');
 });

@@ -31,7 +31,7 @@
                         Seleziona un comune:
                     </label>
                     <select id="comune" name="comune" class="w-100 border border-gray-300 rounded px-4 py-2">
-                        <option value="">Tutti</option>
+                        <option value="">Nessuno</option>
                         @foreach($comuni as $comune)
                             <option value="{{ $comune->id }}" {{ old('comune', $item->street->city_id) == $comune->id ? 'selected' : '' }}>{{ $comune->name }}</option>
                         @endforeach
@@ -81,10 +81,14 @@
                         Seleziona un Strada:
                     </label>
                     <select id="street" name="street" class="w-100 border border-gray-300 rounded px-4 py-2">
-                        <option value="">Tutti</option>
-                        @foreach($streets as $street)
-                            <option value="{{ $street->id }}" {{ old('street', $item->street_id) == $street->id ? 'selected' : '' }}>{{ $street->name }}</option>
-                        @endforeach
+                        @if($streets->count() == 0)
+                            <option value="">Nessuna Strada</option>
+                        @else
+                            <option value="">Nessuna</option>
+                            @foreach($streets as $street)
+                                <option value="{{ $street->id }}" {{ old('street', $item->street_id) == $street->id ? 'selected' : '' }}>{{ $street->name }}</option>
+                            @endforeach
+                        @endif
                     </select>
                 </div>
 
@@ -137,17 +141,21 @@
                 </div>
 
                 <div class="mb-3">
-                    @foreach($groupedTagsType as $type => $tags)
+                    @foreach($types as $typeId => $type)
                         <label class="d-block text-gray-700 text-sm font-bold mb-2 pt-4">
-                            {{$type}}:
+                            {{ $type }}:
                         </label>
-                        <select id="tags_{{$type}}" name="tags[]" class="w-100 border border-gray-300 rounded px-4 py-2">
-                            @foreach($tags as $tag)
-                                <option value="{{ $tag->id }}" {{ in_array($tag->id, old('tags', $item->tags->pluck('id')->toArray())) ? 'selected' : '' }}>{{ $tag->name }}</option>
+                        <select id="tags_{{$typeId}}" name="{{strtolower($type)}}_tag_id" class="w-100 border border-gray-300 rounded px-4 py-2">
+                            <option value="" {{ is_null($currentTags) || empty($currentTags->{strtolower($type) . '_tag_id'}) ? 'selected' : '' }}>Nessun tag</option>
+                            @foreach($tagData[$typeId] as $tag)
+                                <option value="{{ $tag->id }}" {{ !is_null($currentTags) && $currentTags->{strtolower($type) . '_tag_id'} === $tag->id ? 'selected' : '' }}>
+                                    {{$tag->name}}
+                                </option>
                             @endforeach
                         </select>
                     @endforeach
                 </div>
+
 
                 <button type="submit" class="btn btn-success d-inline-flex">
                     Modifica

@@ -25,67 +25,64 @@ class ItemDataTableView extends Model
 
     public function itemDataTableViewQuery() {
 
+        DB::statement('DROP VIEW IF EXISTS item_data_table_views');
+
         //recupero tutti i tipi di tag
-        $allTagTypes = DB::table('tags')->distinct()->pluck('type')->toArray();
+        $types = TagType::pluck('name', 'id');
 
         //query per specificare le colonne della tabella
-        $createViewQuery = DB::table('jc6n141b_zanetti_dev.items AS i')
-                        ->select(
-                            'i.id AS id',
-                            'i.id_sd AS id_sd',
-                            'i.id_da_app AS id_da_app',
-                            'i.time_stamp_pulizia AS time_stamp_pulizia',
-                            'i.caditoie_equiv AS caditoie_equiv',
-                            'i.civic AS civic',
-                            'i.longitude AS longitude',
-                            'i.latitude AS latitude',
-                            'i.altitude AS altitude',
-                            'i.accuracy AS accuracy',
-                            'i.height AS height',
-                            'i.width AS width',
-                            'i.depth AS depth',
-                            'i.pic AS pic',
-                            'i.note AS note',
-                            'i.street_id AS street_id',
-                            'i.user_id AS user_id',
-                            'i.cancellabile AS cancellabile',
-                            'i.deleted_at AS deleted_at',
-                            'i.created_at AS created_at',
-                            'i.updated_at AS updated_at'
-                        )
-                        ->selectRaw('s.name AS street_nome')
-                        ->selectRaw('c.id AS city_id')
-                        ->selectRaw('c.name AS city_nome')
-                        ->selectRaw('u.name AS user_nome')
-                        ->join('streets AS s', 'i.street_id', '=', 's.id')
-                        ->join('cities AS c', 's.city_id', '=', 'c.id')
-                        ->join('users AS u', 'i.user_id', '=', 'u.id');
+        $createViewQuery = DB::table('items AS i')
+                                ->select(
+                                    'i.id AS id',
+                                    'i.id_sd AS id_sd',
+                                    'i.id_da_app AS id_da_app',
+                                    'i.time_stamp_pulizia AS time_stamp_pulizia',
+                                    'i.caditoie_equiv AS caditoie_equiv',
+                                    'i.civic AS civic',
+                                    'i.longitude AS longitude',
+                                    'i.latitude AS latitude',
+                                    'i.altitude AS altitude',
+                                    'i.accuracy AS accuracy',
+                                    'i.height AS height',
+                                    'i.width AS width',
+                                    'i.depth AS depth',
+                                    'i.pic AS pic',
+                                    'i.note AS note',
+                                    'i.street_id AS street_id',
+                                    's.name AS street_nome',
+                                    'c.id AS city_id',
+                                    'c.name AS city_nome',
+                                    'u.name AS user_nome',
+                                    'i.user_id AS user_id',
+                                    'i.cancellabile AS cancellabile',
+                                    'i.deleted_at AS deleted_at',
+                                    'i.created_at AS created_at',
+                                    'i.updated_at AS updated_at',
+                                )
+                                ->from('items AS i')
+                                ->join('streets AS s', 'i.street_id', '=', 's.id')
+                                ->join('cities AS c', 's.city_id', '=', 'c.id')
+                                ->join('users AS u', 'i.user_id', '=', 'u.id')
+                                ->leftJoin('item_tag AS it', 'i.id', '=', 'it.item_id');
 
-        // sottoquery dinamiche per i nomi
-        foreach ($allTagTypes as $tagType) {
-            $createViewQuery->selectRaw("(
-                SELECT GROUP_CONCAT(`tags`.`name` SEPARATOR ',')
-                FROM `tags`
-                JOIN `item_tag` ON `tags`.`id` = `item_tag`.`tag_id`
-                WHERE `tags`.`type` = '$tagType' AND `item_tag`.`item_id` = `i`.`id`
-            ) AS $tagType");
-        }
+                                foreach($types as $type) {
+                                    $tagType = strtolower($type);
+                                    $tagTypeColumn = $tagType . '_tag_id';
+                                    $tagType_id = strtolower($type) . '_id';
 
-        // sottoquery dinamiche per gli id
-        foreach ($allTagTypes as $tagType) {
-            $tagTypeString = $tagType . '_id';
-            $createViewQuery->selectRaw("(
-                SELECT GROUP_CONCAT(`tags`.`id` SEPARATOR ',')
-                FROM `tags`
-                JOIN `item_tag` ON `tags`.`id` = `item_tag`.`tag_id`
-                WHERE `tags`.`type` = '$tagType' AND `item_tag`.`item_id` = `i`.`id`
-            ) AS $tagTypeString");
-        }
+                                    $createViewQuery->leftJoin("tags AS $tagType", "$tagType.id", "=", "it.$tagTypeColumn");
+                                    $createViewQuery->addSelect("$tagType.name AS $tagType");
+                                    $createViewQuery->addSelect("$tagType.id AS $tagType_id");
+
+                                }
 
         
         // Creare la vista nel database utilizzando i risultati
         $createViewQuerySQL = $createViewQuery->toSql();
         $createViewSQL = "CREATE VIEW item_data_table_views AS $createViewQuerySQL";
+
+
+        // DA REINSERIRE PER CREARE LA VISTA
         DB::statement($createViewSQL);
         
     }
