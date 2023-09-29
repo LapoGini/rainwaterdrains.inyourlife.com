@@ -202,7 +202,7 @@ class ItemsDataTable extends DataTable
                                         'url' => '//cdn.datatables.net/plug-ins/1.13.4/i18n/it-IT.json',
                                     ],
                                     'buttons' => [
-                                        ['extend' => 'csv', 'text' => 'DOWNLOAD CSV','exportOptions' => ['columns' => 'th:not(:last-child)']],
+                                        ['extend' => 'csv', 'text' => 'DOWNLOAD CSV', 'exportOptions' => ['columns' => 'th:not(:last-child)']],
                                         ['extend' => 'excel', 'text' => 'DOWNLOAD XLSX','exportOptions' => ['columns' => 'th:not(:last-child)']],
                                     ],
                                     'initComplete' => 'function() {
@@ -222,7 +222,7 @@ class ItemsDataTable extends DataTable
         ->searchable(false),
         // mie colonne'items.id'
         Column::make('street_nome')->title('Via'),
-        Column::make('city_nome')->title('Provincia'),
+        Column::make('city_nome')->title('Località'),
         Column::make('civic')->title('Civico')
                 ->searchable(false)
                 ->visible(false),

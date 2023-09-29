@@ -7,8 +7,11 @@ use App\Http\Controllers\StreetController;
 use App\Http\Controllers\CityController;
 use App\Http\Controllers\ItemController;
 use App\Http\Controllers\Sync\SyncController;
+use App\Http\Controllers\AddCitiesAndStreetsByCsvController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Response;
+
 
 /*
 |--------------------------------------------------------------------------
@@ -28,6 +31,20 @@ Route::get('/', function () {
 Route::get('/dashboard', function () {
     return view('dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
+
+Route::get('/add-cities-and-streets', [AddCitiesAndStreetsByCsvController::class, 'index'])
+    ->name('add-cities-and-streets.index')
+    ->middleware(['auth', 'verified', 'role:admin']);
+
+Route::post('/add-cities-and-streets', [AddCitiesAndStreetsByCsvController::class, 'importCsv'])
+    ->name('add-cities-and-streets.import')
+    ->middleware(['auth', 'verified', 'role:admin']);
+
+Route::get('/download-esempio-csv', function(){
+    $file = public_path('esempioCSV/TestCsv.csv');
+    return Response::download($file, 'TestCsv.csv');
+})->name('download-esempio-csv');
+
 
 Route::post('{domain}/tags/addNewTag', [TagController::class, 'addNewTag'])->name('addNewTag')->middleware(['auth', 'verified', 'role:admin']);
 Route::resource('{domain}/tags', TagController::class)->only(['index', 'create', 'edit', 'store', 'update', 'destroy'])->middleware(['auth', 'verified', 'role:admin']);

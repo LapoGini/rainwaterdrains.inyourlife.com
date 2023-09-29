@@ -106,6 +106,9 @@
                     <li class="nav-item px-3">
                         <a class="nav-link" href="{{ route('tags.index', 'item') }}"><i class="fas fa-tags"></i> {{ __('Tags') }}</a>
                     </li>
+                    <li class="nav-item px-3">
+                        <a class="nav-link" href="{{ route('add-cities-and-streets.index') }}"><i class="fa-solid fa-file-circle-plus"></i> {{ __('Aggiungi Strade e Comuni') }}</a>
+                    </li>
                 </ul>
 
                 <!-- Right Side Of Navbar -->
