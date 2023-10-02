@@ -202,7 +202,6 @@ class ItemsDataTable extends DataTable
                                         'url' => '//cdn.datatables.net/plug-ins/1.13.4/i18n/it-IT.json',
                                     ],
                                     'buttons' => [
-                                        ['extend' => 'csv', 'text' => 'DOWNLOAD CSV', 'exportOptions' => ['columns' => 'th:not(:last-child)']],
                                         ['extend' => 'excel', 'text' => 'DOWNLOAD XLSX','exportOptions' => ['columns' => 'th:not(:last-child)']],
                                     ],
                                     'initComplete' => 'function() {
