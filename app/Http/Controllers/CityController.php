@@ -13,7 +13,7 @@ class CityController extends Controller
 {
     public function index() 
     {
-        $cities = City::with('user')->orderBy('id', 'DESC')->paginate(50);
+        $cities = City::with('user')->orderBy('id', 'DESC')->get();
 
         $users = User::whereHas('roles', function (Builder $query) {
             $query->where('slug', '=', 'cliente');

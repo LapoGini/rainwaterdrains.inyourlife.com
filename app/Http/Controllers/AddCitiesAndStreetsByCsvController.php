@@ -35,7 +35,7 @@ class AddCitiesAndStreetsByCsvController extends Controller
             // Estrai l'intestazione del CSV
             $header = array_shift($rows);
 
-            if ($header !== ['"comune"', '"provincia"', '"via"']) {
+            if ($header !== ['comune', 'provincia', 'via']) {
                 $formatError = back()->withErrors('Formato CSV non valido. L\'intestazione dovrebbe essere: comune, provincia, via');
                 return $formatError;
             }
