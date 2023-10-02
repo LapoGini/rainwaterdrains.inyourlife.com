@@ -105,8 +105,6 @@ class ItemsDataTable extends DataTable
 
         $query = $model->newQuery();
 
-        
-
         $clientId = (isset($this->richiesta['client']) ? $this->richiesta['client'] : '');
         $comuneId = (isset($this->richiesta['comune']) ? $this->richiesta['comune'] : '');
         $streetId = (isset($this->richiesta['street']) ? $this->richiesta['street'] : '');
@@ -167,6 +165,21 @@ class ItemsDataTable extends DataTable
                 $tagType = strtolower($tagType) . '_id';
                 foreach ($tags as $tagId) {
                     $query->where($tagType, $tagId);
+                }
+            }
+        }
+
+        $orderInput = $this->request->input('order');
+
+        if ($orderInput) {
+            foreach ($orderInput as $order) {
+                $columnIndex = $order['column'];
+                $orderDirection = $order['dir'];
+                $columns = $this->getColumns();
+                if (isset($columns[$columnIndex])) {
+                    $columnName = $columns[$columnIndex]['name'];
+
+                    $query->orderBy($columnName, $orderDirection);
                 }
             }
         }
