@@ -58,6 +58,7 @@ Route::get('/items/view/{item}', [ItemController::class, 'view'])->name('items.v
 //Route::get('items/filterData', [ItemController::class, 'filterData'])->name('items.filterData')->middleware(['auth', 'verified', 'role:admin']);
 Route::get('items/city_id/{client}', [ItemController::class, 'getHtmlCityByClient'])->name('items.city_id')->middleware(['auth', 'verified', 'role:admin']);
 Route::get('items/street/{city_id}', [ItemController::class, 'getHtmlStreetByCity'])->name('items.street')->middleware(['auth', 'verified', 'role:admin']);
+Route::post('/save-ids-to-session', [ItemController::class, 'saveIdsToSession'])->name('items.saveIdsToSession')->middleware(['auth', 'verified', 'role:admin']);
 Route::get('/download-zip', [ItemController::class, 'createZipFileFromImg_Items'])->name('items.downloadZip')->middleware(['auth', 'verified', 'role:admin']);
 Route::get('/items/{item}/edit/previous', [ItemController::class, 'previous'])->name('items.previous')->middleware(['auth', 'verified', 'role:admin']);
 Route::get('/items/{item}/edit/next', [ItemController::class, 'next'])->name('items.next')->middleware(['auth', 'verified', 'role:admin']);

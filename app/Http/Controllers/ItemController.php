@@ -19,11 +19,19 @@ use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Session;
-use Yajra\DataTables\DataTablesEditor;
-use Yajra\DataTables\DataTables;
+use Illuminate\Http\Request;
 
 class ItemController extends Controller
 {
+    public function saveIdsToSession(Request $request) {
+        $ids = $request->input('ids');
+
+        // Salva gli ID nella sessione
+        Session::put('filteredItems', $ids);
+    
+        return response()->json(['message' => 'IDs saved to session successfully.']);
+    }
+
     public function index(ItemsDataTable $dataTable, FilteredDataRequest $request)
     {
         $types = TagType::pluck('name', 'id');
@@ -143,7 +151,7 @@ class ItemController extends Controller
                 ->get();
 
         $zip = new ZipArchive;
-
+        
         $zipFileName = '/downloads/' . time() . '.zip';
 
         $zipFilePath = Storage::disk('img_items')->path($zipFileName);

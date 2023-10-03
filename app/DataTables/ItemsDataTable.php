@@ -12,10 +12,11 @@ use Yajra\DataTables\Services\DataTable;
 use App\Models\TagType;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\Log;
+
 
 class ItemsDataTable extends DataTable
 {
-    public $filteredItems = [];
 
     protected $allTagTypes;
 
@@ -168,25 +169,8 @@ class ItemsDataTable extends DataTable
                 }
             }
         }
-
-        $orderInput = $this->request->input('order');
-
-        if ($orderInput) {
-            foreach ($orderInput as $order) {
-                $columnIndex = $order['column'];
-                $orderDirection = $order['dir'];
-                $columns = $this->getColumns();
-                if (isset($columns[$columnIndex])) {
-                    $columnName = $columns[$columnIndex]['name'];
-
-                    $query->orderBy($columnName, $orderDirection);
-                }
-            }
-        }
-
-        $this->filteredItems = $query->pluck('id')->toArray();
-        Session::put('filteredItems', $this->filteredItems);
         return $query;
+
     }
 
     /**

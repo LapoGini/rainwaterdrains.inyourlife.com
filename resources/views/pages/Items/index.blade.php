@@ -213,6 +213,32 @@
         hideDeletableButton();
         hideZipButton();
 
+        $('#zanetti-table-download').on('xhr.dt', function (e, settings, json, xhr) {
+            console.log(json);
+
+            var ids = json.data.map(function(item) {
+                return item.id;
+            });
+
+            // Invia gli ID al server utilizzando AJAX
+            $.ajax({
+                url: '/save-ids-to-session',
+                method: 'POST',
+                data: {
+                    ids: ids
+                },
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                },
+                success: function(response) {
+                    console.log(response);
+                },
+                error: function(xhr, status, error) {
+                    console.error(error);
+                }
+            });
+        });
+
         // Prendere i filtri all'invio del form
         $('form').submit(function(event) {
             event.preventDefault();
@@ -223,7 +249,6 @@
                 $('#downloadZip').show();
             }
         });
-
         // button per resettare i filtri
         $('#resetButton').on('click', function() {
             resetFilters();
