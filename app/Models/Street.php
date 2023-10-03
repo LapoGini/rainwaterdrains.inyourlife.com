@@ -9,7 +9,7 @@ class Street extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['name', 'city_id', 'street_id_app'];
+    protected $fillable = ['name', 'city_id', 'street_id_app', 'comune_id_vecchio_db', 'strada_id_vecchio_db'];
 
     public function city() {
         return $this->belongsTo(City::class);
