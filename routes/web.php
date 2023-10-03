@@ -64,7 +64,11 @@ Route::get('/download-zip', [ItemController::class, 'createZipFileFromImg_Items'
 Route::get('/items/{item}/edit/previous', [ItemController::class, 'previous'])->name('items.previous')->middleware(['auth', 'verified', 'role:admin']);
 Route::get('/items/{item}/edit/next', [ItemController::class, 'next'])->name('items.next')->middleware(['auth', 'verified', 'role:admin']);
 Route::get('/crea-tabella-caditoie/{da}/{a}', [\App\Http\Controllers\CaditoieController::class, 'importaDati'])->middleware(['auth', 'verified', 'role:admin']);
+
+
+//IMPORTAZIONE VECCHIO DB NEL NUOVO DB
 Route::get('/crea-tabella-comuni', [\App\Http\Controllers\ComuneController::class, 'importaDati'])->middleware(['auth', 'verified', 'role:admin']);
+
 Route::get('/crea-tabella-item_tag', [\App\Http\Controllers\ItemTagController::class, 'importaDati'])->middleware(['auth', 'verified', 'role:admin']);
 
 Route::middleware('auth')->group(function () {

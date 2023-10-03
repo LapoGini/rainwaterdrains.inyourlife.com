@@ -15,40 +15,17 @@ class ComuneController extends Controller
 {
     public function importaDati()
     {
-        Comune::chunk(100, function ($datiVecchiaTabella) {
-            foreach ($datiVecchiaTabella as $dato) {
+        $comuni = Comune::all();
 
-                $comuneTemporaneo = TempComuni::where('comune_nome', $dato->comune_nome)->first();
-
-                if ($comuneTemporaneo) {
-                    
-                    $cliente = Cliente::where('CLIENTE', $dato->CLIENTE)->first();
-
-                    if ($cliente->id == 1) {
-                        $cliente->id = 3;
-                    } elseif ($cliente->id == 2) {
-                        $cliente->id = 4;
-                    } elseif ($cliente->id == 3) {
-                        $cliente->id = 5;
-                    }
-
-                    // Se il cliente esiste, crea la nuova riga nella tabella "City"
-                    if ($cliente) {
-                        City::create([
-                            'id' => $comuneTemporaneo->id,
-                            'name' => $dato->comune_id,
-                            'district' => $dato->provincia_id,
-                            'pics' => $dato->foto,
-                            'user_id' => $cliente->id,
-                            'status' => $dato->stato,
-                        ]);
-                    } else {
-                        // Cliente non trovato, puoi gestire questa situazione qui
-                    }
-                } else {
-                    // Comune temporaneo non trovato, puoi gestire questa situazione qui
-                }
-            }
-        });
+        foreach ($comuni as $comune) {
+            City::create([
+                'name' => $comune->comune_nome,
+                'district' => $comune->provincia_id,
+                'pics' => $comune->foto,
+                'user_id' => 11,
+                'status' => $comune->stato,
+            ]);
+        }
     }
+
 }
