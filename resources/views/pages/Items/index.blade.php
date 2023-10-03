@@ -391,7 +391,7 @@
 
         // Funzione per rendere cancellabili le caditoie
         function deleteSewers() {
-            let text = "Sei sicuro di voler eliminare le caditoie?\nScegli Ok o Annulla.";
+            let text = "Sei sicuro di voler renedere cancellabili queste caditoie?\nScegli Ok o Annulla.";
             if (confirm(text)) {
                 $.ajax({
                 url: "{{ route('items.deleteSewers') }}",
@@ -409,7 +409,11 @@
                             if (risposta.data.non_cancellabile.length === 0) {
                                 modalSuccess.find('.modal-body').html('Tutte le caditoie sono cancellabili!');
                             } else {
-                                modalSuccess.find('.modal-body').html('Hai reso cancellabili ' + risposta.data.cancellabile.length + ' caditoie, eccetto ' + risposta.data.non_cancellabile.length + ' caditoie!');
+                                var numMadeDeletable = risposta.data.cancellabile.length;
+                                var numNotMadeDeletable = risposta.data.non_cancellabile.length;
+                                var difference = numMadeDeletable - numNotMadeDeletable;
+
+                                modalSuccess.find('.modal-body').html('Hai reso cancellabili ' + difference + ' caditoie, ' + risposta.data.non_cancellabile.length + ' di quelle selezionate, lo sono già!');
                             }
                             modalSuccess.modal('show');
                         }

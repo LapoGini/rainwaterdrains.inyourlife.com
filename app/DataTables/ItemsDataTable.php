@@ -51,7 +51,7 @@ class ItemsDataTable extends DataTable
                     class="btn btn-danger delete_item p-1"
                     title="Cancella"
                     data-url="' . $deleteUrl . '"
-                    onclick="event.preventDefault(); if(confirm(\'Sei sicuro di voler eliminare questo comune?\')){ destroy(this.getAttribute(\'data-url\')) }"
+                    onclick="event.preventDefault(); if(confirm(\'Sei sicuro di voler eliminare questa caditoia?\')){ destroy(this.getAttribute(\'data-url\')) }"
                     href="javascript:void(0)"
                 >
                     <i class="fa-solid fa-trash"></i> Cancella

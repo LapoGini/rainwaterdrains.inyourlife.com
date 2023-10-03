@@ -145,10 +145,9 @@ class ItemController extends Controller
         $ret['data'] = [];
 
         $filteredItemsSession = Session::get('filteredItems');
-        $filteredItems = Item::with('street', 'street.city', 'tags', 'user')
-                ->whereIn('id', $filteredItemsSession)
-                ->orderBy('id', 'DESC')
-                ->get();
+        $filteredItems = Item::whereIn('id', $filteredItemsSession)
+                            ->orderBy('id', 'DESC')
+                            ->get();
 
         $zip = new ZipArchive;
         
@@ -244,7 +243,6 @@ class ItemController extends Controller
             $prevItemId = ($currentIndex > 0) ? $filteredItemsSession[$currentIndex - 1] : null;
             $nextItemId = ($currentIndex < count($filteredItemsSession) - 1) ? $filteredItemsSession[$currentIndex + 1] : null;
         }
-    
 
         $itemDataFromView = DB::table('item_data_table_views')->where('id', $item->id)->first();
 

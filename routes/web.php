@@ -52,6 +52,7 @@ Route::resource('streets', StreetController::class)->only(['index', 'create', 'e
 Route::resource('cities', CityController::class)->only(['index', 'create', 'edit', 'store', 'update', 'destroy'])->middleware(['auth', 'verified', 'role:admin']);
 Route::resource('users', UserController::class)->only(['index', 'create', 'edit', 'store', 'update', 'destroy'])->middleware(['auth', 'verified', 'role:admin']);
 Route::resource('items', ItemController::class)->only(['index', 'create', 'edit', 'update'])->middleware(['auth', 'verified', 'role:admin']);
+Route::get('/items/deletable', [ItemController::class, 'deleteSewers'])->name('items.deleteSewers')->middleware(['auth', 'verified', 'role:admin']);
 Route::get('items/{id}', [ItemController::class, 'destroy'])->name('items.destroy')->middleware(['auth', 'verified', 'role:admin']);
 Route::get('/items/view/{item}', [ItemController::class, 'view'])->name('items.view')->middleware(['auth', 'verified', 'role:admin']);
 
@@ -62,7 +63,6 @@ Route::post('/save-ids-to-session', [ItemController::class, 'saveIdsToSession'])
 Route::get('/download-zip', [ItemController::class, 'createZipFileFromImg_Items'])->name('items.downloadZip')->middleware(['auth', 'verified', 'role:admin']);
 Route::get('/items/{item}/edit/previous', [ItemController::class, 'previous'])->name('items.previous')->middleware(['auth', 'verified', 'role:admin']);
 Route::get('/items/{item}/edit/next', [ItemController::class, 'next'])->name('items.next')->middleware(['auth', 'verified', 'role:admin']);
-Route::get('/items/deletable', [ItemController::class, 'deleteSewers'])->name('items.deleteSewers')->middleware(['auth', 'verified', 'role:admin']);
 Route::get('/crea-tabella-caditoie/{da}/{a}', [\App\Http\Controllers\CaditoieController::class, 'importaDati'])->middleware(['auth', 'verified', 'role:admin']);
 Route::get('/crea-tabella-comuni', [\App\Http\Controllers\ComuneController::class, 'importaDati'])->middleware(['auth', 'verified', 'role:admin']);
 Route::get('/crea-tabella-item_tag', [\App\Http\Controllers\ItemTagController::class, 'importaDati'])->middleware(['auth', 'verified', 'role:admin']);
