@@ -26,4 +26,21 @@ class UpdateUserRequest extends FormRequest
         ];
     }
 
+    public function messages(): array
+    {
+        return [
+            'name.required' => 'Il nome è obbligatorio.',
+            'name.string' => 'Il nome deve essere una stringa.',
+            'name.max' => 'Il nome non può essere più lungo di 100 caratteri.',
+            
+            'email.required' => 'L\'email è obbligatoria.',
+            'email.email' => 'Devi inserire un\'email valida.',
+            
+            'password.min' => 'La password deve avere almeno 6 caratteri.',
+            'password.regex' => 'La password deve contenere almeno una lettera, un numero e un carattere speciale (! $ # %).',
+            
+            'rolesIds.array' => 'Roles IDs deve essere un array.',
+        ];
+    }
+
 }
