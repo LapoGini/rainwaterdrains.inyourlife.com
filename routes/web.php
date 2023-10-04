@@ -70,6 +70,8 @@ Route::get('/crea-tabella-caditoie/{da}/{a}', [\App\Http\Controllers\CaditoieCon
 Route::get('/crea-tabella-comuni', [\App\Http\Controllers\ComuneController::class, 'importaDati'])->middleware(['auth', 'verified', 'role:admin']);
 Route::get('/crea-tabella-strade', [\App\Http\Controllers\StradeController::class, 'importaDati'])->middleware(['auth', 'verified', 'role:admin']);
 
+Route::get('/crea-tabella-caditoie/{da}/{a}', [\App\Http\Controllers\CaditoieController::class, 'importaDati'])->middleware(['auth', 'verified', 'role:admin']);
+
 Route::get('/crea-tabella-item_tag', [\App\Http\Controllers\ItemTagController::class, 'importaDati'])->middleware(['auth', 'verified', 'role:admin']);
 
 Route::middleware('auth')->group(function () {

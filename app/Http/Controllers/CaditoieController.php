@@ -8,8 +8,9 @@ use App\Models\Foto;
 use App\Models\Street;
 use App\Models\City;
 use App\Models\User;
-use Illuminate\Support\Facades\Log;
-
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
+use GuzzleHttp\Client;
 
 class CaditoieController extends Controller
 {
@@ -23,35 +24,51 @@ class CaditoieController extends Controller
             $dato = Caditoie::find($id);
 
             if ($dato) {
-
-                $foto = Foto::where('tmp_caditoia_id', $dato->caditoie_id)->first();
-
+                $foto = Foto::where('foto_id', $dato->foto_id)->first();
                 $city = City::where('name', $dato->comune_id)->first();
 
                 if ($city) {
-                    $street = Street::where('city_id', $city->id)->first();
+                    $street = Street::where('strada_id_vecchio_db', $dato->codice_via)->first();
 
                     if ($street) {
-                        $user = User::where('id', $dato->user_id)->first();
+                        $userMapping = [
+                            2993 => 5,
+                            2994 => 6,
+                            2995 => 7,
+                            2996 => 8,
+                            2998 => 10,
+                            2999 => 11,
+                        ];
+                        $userId = $userMapping[$dato->user_id] ?? null;
+
+                        $imageName = null;
+
+                        if ($foto && $foto->foto_absoluteurl) {
+                            $imageName = $this->downloadAndSaveImage($foto->foto_absoluteurl);
+                            if (!$imageName) {
+                                var_dump('Errore nel salvataggio dell\'immagine per l\'ID: ' . $dato->id);
+                                continue;
+                            }
+                        }
 
                         Item::create([
-                            'id' => $dato->id,
+                            'id_vecchio_db' => $dato->id,
                             'id_sd' => null,
                             'id_da_app' => $dato->caditoie_id,
                             'time_stamp_pulizia' => $dato->caditoie_timestamp,
                             'caditoie_equiv' => $dato->caditoie_equiv,
-                            'civic' => $dato->codice_via,
+                            'civic' => $dato->caditoie_ubicazione,
                             'longitude' => $dato->caditoie_lng,
                             'latitude' => $dato->caditoie_lat,
-                            'altitude' => !empty( $dato->caditoie_altitude) ? $dato->caditoie_altitude : null,
+                            'altitude' => !empty($dato->caditoie_altitude) ? $dato->caditoie_altitude : null,
                             'accuracy' => 0,
                             'height' => str_replace(',', '.', $dato->lunghezza),
                             'width' => str_replace(',', '.', $dato->larghezza),
                             'depth' => str_replace(',', '.', $dato->profondita),
-                            'pic' => !empty($foto->tmp_caditoia_id) ? $foto->tmp_caditoia_id : null,
+                            'pic' => $imageName,
                             'note' => $dato->caditoie_note,
-                            'street_id' => $street->id ? $street->id : null,
-                            'user_id' => $user->id ? $user->id : null,
+                            'street_id' => $street->id,
+                            'user_id' => $userId,
                             'cancellabile' => null,
                             'deleted_at' => null,
                         ]);
@@ -68,8 +85,34 @@ class CaditoieController extends Controller
         }
         var_dump("Totale importati: " . $count);
     }
+
+    private function downloadAndSaveImage($imageUrl) {
+        $client = new Client();
+        $response = $client->get($imageUrl);
+    
+        if ($response->getStatusCode() == 200 && strpos($response->getHeader('Content-Type')[0], 'image') !== false) {
+
+            $explodedUrl = explode('/', $imageUrl);
+            $dateFolder = $explodedUrl[5];  // Ottiene la cartella della data
+            $imageName = end($explodedUrl);  // Ottiene il nome del file
+    
+            if(!Storage::disk('img_items')->exists($dateFolder)) {
+                Storage::disk('img_items')->makeDirectory($dateFolder, 0775, true);
+            }
+    
+            // Controlla se il file esiste già
+            if(Storage::disk('img_items')->exists($dateFolder.'/'.$imageName)) {
+                $newImageName = $imageName.'_'.date('His');
+            } else {
+                $newImageName = $imageName;
+            }
+
+            Storage::disk('img_items')->put($dateFolder.'/'.$newImageName, $response->getBody());
+    
+            return $newImageName;  // Restituisci il nome del file per usarlo in seguito
+        }
+    
+        return null;  // Restituisci null se qualcosa va storto
+    }
+
 }
-
-// ALTER TABLE RWD_CADITOIE MODIFY COLUMN street_id INT NULL DEFAULT NULL;
-
-// ALTER TABLE RWD_CADITOIE MODIFY COLUMN user_id INT NULL DEFAULT NULL;
