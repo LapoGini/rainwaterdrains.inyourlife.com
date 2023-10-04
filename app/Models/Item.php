@@ -10,6 +10,7 @@ class Item extends Model
     use HasFactory;
 
     protected $fillable = [
+        'id_vecchio_db',
         'id_sd', 
         'id_da_app',
         'time_stamp_pulizia',

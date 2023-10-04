@@ -1,6 +1,6 @@
 @extends('layouts.app')
 @section('content')
-<div class="w-75 p-5 m-auto">
+<div class="w-100 p-5 m-auto">
     <div class="pb-5">
         <a href="{{ $prevItemId ? route('items.edit', $prevItemId) : '#' }}" class="prevNext btn d-inline-flex rounded align-items-center text-decoration-none fw-bold bg-primary text-light border-0 py-2 px-3{{ $prevItemId ? '' : ' disabled' }}">
             Precedente
@@ -167,7 +167,7 @@
         </div>
         <div class="col-6">
             <div class="img_caditoia mb-5">
-                <img src="{{ $item->pic_link }}" alt="">
+                <img class="w-100" src="{{ $item->pic_link }}" alt="">
             </div>
             <div id="map" data-latitude="{{ $item->latitude }}" data-longitude="{{ $item->longitude }}" style="max-width: 100%; height: 300px"></div>
         </div>
