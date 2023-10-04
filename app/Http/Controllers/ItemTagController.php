@@ -14,9 +14,9 @@ class ItemTagController extends Controller
 {
     public function importaDati()
     {
-        //$items = Item::all();
+        $items = Item::all();
 
-        $items = Item::whereBetween('id', [32119, 36694])->get();
+        //$items = Item::whereBetween('id', [32119, 50978])->get();
 
         foreach ($items as $item) {
             $oldData = DB::table('RWD_CADITOIE')->where('id', $item->id_vecchio_db)->first();
@@ -40,7 +40,7 @@ class ItemTagController extends Controller
                 $tipoPozzettoMapping = [
                     1 => 4,
                     2 => 5,
-                    3 => 6
+                    4 => 6
                 ];
 
                 $tipologia_tag_id = isset($tipoPozzettoMapping[$oldData->tipo_pozzetto_id]) ? $tipoPozzettoMapping[$oldData->tipo_pozzetto_id] : null;

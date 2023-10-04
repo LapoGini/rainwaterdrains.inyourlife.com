@@ -23,6 +23,17 @@ class CityController extends Controller
     public function getViePerOgniComune($city_id) 
     {
 
+        /*
+        GEO.ZA
+        $vie=[];
+        $cities= City::orderBy('id', 'DESC')->get();
+        foreach ($cities as $comune){
+            $vie[$comune->id]= (new StreetController)->getByCityId($comune->id)->original['data'];
+        }        
+        return Functions::setResponse($vie, 'Vie non trovate');
+        FINE GEO.ZA
+        */
+        
         //dd($city_id);
         $streets = Street::where('city_id', $city_id)->get();
         return Functions::setResponse($streets, 'Strade non trovate');

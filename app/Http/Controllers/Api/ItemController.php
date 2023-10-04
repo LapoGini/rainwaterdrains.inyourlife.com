@@ -8,6 +8,7 @@ use App\Models\Item;
 use App\Models\Street;
 use App\Models\User;
 use App\Models\ItemTag;
+use App\Models\Tag;
 use App\Models\TagType;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
@@ -66,6 +67,63 @@ class ItemController extends Controller
         return Functions::setResponse($items, 'Strade non trovate');
     }
 
+    // INIZIO GEO.ZA //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    public function set(Request $request)
+    {
+        $user = Auth::guard('api')->user();
+        $data = $request->all();
+
+        // Validator per accettare i dati dalla vecchia app
+        $validator = Validator::make($data, [
+            'latitude' => 'required|numeric',
+            'longitude' => 'required|numeric',
+            'altitude' => 'required|numeric',
+            'accuracy' => 'required|numeric',
+            'pic' => 'string|nullable',
+            'note' => 'string|nullable',
+            'height' => 'required|numeric',
+            'width' => 'required|numeric',
+            'depth' => 'required|numeric',
+            'street_id' => 'required|numeric',
+            'tagsIds' => 'array'
+        ]);
+
+        if($validator->fails()){
+            return response()->json(['validation_errors' => $validator->messages()],201);
+        }
+
+        $street = Street::where(function($query) use ($data) {
+            $query->where('street_id_app', $data['street_id'])
+                ->orWhere('id', $data['street_id']);
+        })->first();
+
+        if (isset($street)) {
+            $item = Item::make($data);
+            $item->street_id = $street->id;
+            $item->user_id = $user->id;
+            $item->save();
+        }
+
+        if(isset($data['tagsIds'])){
+            $tagData = ['item_id' => $item->id];
+            
+            foreach($data['tagsIds'] as $tagTypeId => $tagId) {
+                $tagType = TagType::find($tagTypeId);
+                if($tagType) {
+                    $columnName = strtolower($tagType->name) . '_tag_id';
+                    $tagData[$columnName] = $tagId;
+                }
+            }
+            ItemTag::create($tagData);
+        }
+
+        return response()->json(['success' => $item], 200);
+    }
+    // FINE GEO.ZA //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    
+    /*
+    INIZIO RWD
     public function set(Request $request)
     {
         $data = $request->all();
@@ -124,6 +182,8 @@ class ItemController extends Controller
 
         return response()->json(['success' => $item], 200);
     }
+    FINE RWD
+    */
 
     /**
      * ritorna id item aggiornato con data deleted a NOW()
@@ -360,6 +420,7 @@ class ItemController extends Controller
         return $ret;
     }
 
+    // GEO.ZA ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     public function saveImage(Request $request){
         try {
             $imagedata = $request->input('imagedata');
@@ -388,6 +449,7 @@ class ItemController extends Controller
         }
     }
 
+    // GEO.ZA ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     private function checkUser($id_user,$iduserhash){
         $api_token= $iduserhash;
 
@@ -420,6 +482,8 @@ class ItemController extends Controller
      * @param Request la richiesta con data (Y-m-d) per filtrare dati
      * @return json dati di tutte le caditoie filtrate
      */
+
+    // GEO.ZA ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     public function getCaditoieScansionate (Request $request){
 
         $data = $request->all()['data'];
@@ -485,6 +549,8 @@ class ItemController extends Controller
      * @param Request la richiesta con giorniindietro e codicevia per filtrare i dati
      * @return json dati di tutte le caditoie filtrate
      */
+
+    // GEO.ZA ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     public function getCaditoieScansionatePerVia (Request $request){
         $data = $request->all()['data'];
 
@@ -502,7 +568,7 @@ class ItemController extends Controller
             return response()->json($ret, 200);
         }
 
-        $items = Item::with('street', 'street.city', 'user')
+        $items = Item::with('street', 'street.city', 'itemTag', 'user')
             ->where('street_id', $codicevia)
             ->whereRaw('DATE_FORMAT(time_stamp_pulizia, "%Y-%m-%d") >= ?', [Carbon::now()->subDays($giorniindietro)->toDateString()])
             ->when($user_id, function ($query, $user_id) {
@@ -512,6 +578,18 @@ class ItemController extends Controller
         $caditoie=[];
         $row=0;
         foreach ($items as $i){
+            $itemTag = $i->itemTags; // Questo dovrebbe darti l'oggetto ItemTag associato all'Item corrente
+            $tagTypes = TagType::all();
+
+            foreach ($tagTypes as $tagType) {
+                $columnName = strtolower($tagType->name) . '_tag_id';
+                $tag = Tag::find($itemTag[$columnName]);
+                
+                if ($tag) {
+                    $key = strtolower($tagType->name) . '_nome';
+                    $caditoie[$row][$key] = $tag->name;
+                }
+            }
             $caditoie[$row]['id']=$i->id;
             $caditoie[$row]['data_caditoia']=$i->time_stamp_pulizia;
             $caditoie[$row]['caditoie_civico']=$i->civic;

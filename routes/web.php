@@ -63,7 +63,6 @@ Route::post('/save-ids-to-session', [ItemController::class, 'saveIdsToSession'])
 Route::get('/download-zip', [ItemController::class, 'createZipFileFromImg_Items'])->name('items.downloadZip')->middleware(['auth', 'verified', 'role:admin']);
 Route::get('/items/{item}/edit/previous', [ItemController::class, 'previous'])->name('items.previous')->middleware(['auth', 'verified', 'role:admin']);
 Route::get('/items/{item}/edit/next', [ItemController::class, 'next'])->name('items.next')->middleware(['auth', 'verified', 'role:admin']);
-Route::get('/crea-tabella-caditoie/{da}/{a}', [\App\Http\Controllers\CaditoieController::class, 'importaDati'])->middleware(['auth', 'verified', 'role:admin']);
 
 
 //IMPORTAZIONE VECCHIO DB NEL NUOVO DB

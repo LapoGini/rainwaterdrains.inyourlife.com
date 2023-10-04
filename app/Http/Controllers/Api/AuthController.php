@@ -12,6 +12,7 @@ class AuthController extends Controller
 {
     public function login(Request $request)
     {
+        // INIZIO RWD //
         // Prova prima con il token
         $bearerToken = $request->header('Authorization');
         $apiToken = str_replace('Bearer ', '', $bearerToken);
@@ -22,6 +23,8 @@ class AuthController extends Controller
                 return response()->json(['result' => true, 'user' => $user], 200);
             }
         }
+        // FINE RWD //
+
 
         // Se nessun token è fornito, prova con email e password
         $credentials = [
@@ -40,6 +43,16 @@ class AuthController extends Controller
             return response()->json([
                 'result' => true, 
                 'user' => $user,
+                /* 
+                INIZIO GEO.ZA
+                'comuni' => (new CityController)->getAll()->original['data'], 
+                'vie' => (new CityController)->getViePerOgniComune()->original['data'],
+                'clienti' => (new UserController)->getByRole('cliente')->original['data'], 
+                'recapiti' => (new TagController)->getRecapiti()->original['data'], 
+                'stati' => (new TagController)->getStati()->original['data'], 
+                'pozzetti' => (new TagController)->getTipiPozzetto()->original['data']
+                FINE GEO.ZA 
+                */
             ], 200);
         }
 
@@ -49,6 +62,9 @@ class AuthController extends Controller
     public function logout(Request $request)
     {
         $user = User::where('api_token', $request->bearerToken())->first();
+
+        // GEO.ZA    $user = Auth::guard('api')->user();
+
 
         if ($user) {
             $user->api_token = null;
