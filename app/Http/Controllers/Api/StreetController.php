@@ -8,18 +8,22 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Models\User;
+use Illuminate\Support\Facades\Log;
+
 
 use App\Utils\Functions;
 
 class StreetController extends Controller
 {
 
-    public function getAll()
+    public function getAll() 
     {
-        $streets = Street::all();
-
+        $streets = Street::orderBy('name')
+            ->get();
+    
         return Functions::setResponse($streets, 'Strade non trovate');
     }
+    
 
     public function getAllByCityId()
     {
@@ -39,7 +43,11 @@ class StreetController extends Controller
 
     public function setVia(Request $request)
     {
+
         $data = $request->all();
+
+        Log::info('Received data:', $data);
+
 
         if (empty($data['name'])) {
             return response()->json(['result' => false, 'error' => "Strada mancante!"], 200);

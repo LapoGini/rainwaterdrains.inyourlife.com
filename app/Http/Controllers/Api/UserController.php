@@ -28,13 +28,9 @@ class UserController extends Controller
     {
         $users = User::with('roles')->whereHas('roles', function (Builder $query) use ($role) {
             $query->where('slug', '=', $role);
-        })->get();
-        
-        if ($role=='cliente') {
-            foreach ($users as $user){
-                $user->abilita_modulo_su_app=1; //default per compatibilità con il vecchio
-            }
-        }
+        })
+        ->orderBy('name')
+        ->get();
 
         return Functions::setResponse($users, 'Utenti non trovati');
     }
