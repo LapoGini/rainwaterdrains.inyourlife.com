@@ -20,7 +20,7 @@
                         <select id="client" name="client" class="select2 w-100 border border-gray-300 rounded px-4 py-2">
                             <option value="">Tutti</option>
                             @foreach($clients as $client)
-                                <option value="{{ $client->id }}">{{ $client->name }}</option>
+                            <option value="{{ $client->id }}">{{ $client->name }}</option>
                             @endforeach
                         </select>
                     </div>
@@ -31,7 +31,7 @@
                         <select id="comune" name="comune" class="select2 w-100 border border-gray-300 rounded px-4 py-2">
                             <option value="">Tutti</option>
                             @foreach($comuni as $comune)
-                                <option value="{{ $comune->id }}">{{ $comune->name }}</option>
+                            <option value="{{ $comune->id }}">{{ $comune->name }}</option>
                             @endforeach
                         </select>
                     </div>
@@ -42,7 +42,7 @@
                         <select id="street" name="street" class="select2 w-100 border border-gray-300 rounded px-4 py-2">
                             <option value="">Tutte</option>
                             @foreach($streets as $street)
-                                <option value="{{ $street->id }}">{{ $street->name }}</option>
+                            <option value="{{ $street->id }}">{{ $street->name }}</option>
                             @endforeach
                         </select>
                     </div>
@@ -68,7 +68,7 @@
                         <select id="operator" name="operator" class="select2 w-100 border border-gray-300 rounded px-4 py-2">
                             <option value="">Tutti</option>
                             @foreach($operators as $operator)
-                                <option value="{{ $operator->id }}">{{ $operator->name }}</option>
+                            <option value="{{ $operator->id }}">{{ $operator->name }}</option>
                             @endforeach
                         </select>
                     </div>
@@ -76,17 +76,17 @@
                 <div class="box px-3 col-12 col-md-6 col-lg-4">
                     <div class="mb-4">
                         @foreach($groupedTagsType as $type => $tags)
-                            <label class="fw-light fst-italic d-block text-gray-700 text-sm font-bold mb-2">
-                                {{ $types[$type] }}:
+                        <label class="fw-light fst-italic d-block text-gray-700 text-sm font-bold mb-2">
+                            {{ $types[$type] }}:
+                        </label>
+                        <div class="tag-box pb-4">
+                            @foreach($tags as $tag)
+                            <label for="tag_{{$tag->id}}" class="inline-flex items-center">
+                                <input id="tag_{{$tag->id}}" name="tags[{{$type}}][]" value="{{ $tag->id }}" type="checkbox" class="border-gray-300 rounded px-4 py-2 mr-2">
+                                <span>{{ $tag->name }}</span>
                             </label>
-                            <div class="tag-box pb-4">
-                                @foreach($tags as $tag)
-                                    <label for="tag_{{$tag->id}}" class="inline-flex items-center">
-                                        <input id="tag_{{$tag->id}}" name="tags[{{$type}}][]" value="{{ $tag->id }}" type="checkbox" class="border-gray-300 rounded px-4 py-2 mr-2">
-                                        <span>{{ $tag->name }}</span>
-                                    </label>
-                                @endforeach
-                            </div>
+                            @endforeach
+                        </div>
                         @endforeach
                     </div>
                 </div>
@@ -190,17 +190,16 @@
             type: "GET",
             url: url,
             dataType: "json",
-            success: function (data) {
-                
+            success: function(data) {
+
                 if (data) {
                     location.reload();
 
-                }
-                else {
+                } else {
                     alert(data.msg);
                 }
             },
-            error: function (jqXHR, textStatus, errorThrown) {
+            error: function(jqXHR, textStatus, errorThrown) {
                 console.error('Errore AJAX:', textStatus, errorThrown);
                 alert("Si è verificato un errore! Riprova!");
             }
@@ -213,7 +212,7 @@
         hideDeletableButton();
         hideZipButton();
 
-        $('#zanetti-table-download').on('xhr.dt', function (e, settings, json, xhr) {
+        $('#zanetti-table-download').on('xhr.dt', function(e, settings, json, xhr) {
             console.log(json);
 
             var ids = json.data.map(function(item) {
@@ -242,8 +241,8 @@
         // Prendere i filtri all'invio del form
         $('form').submit(function(event) {
             event.preventDefault();
-            window.LaravelDataTables["zanetti-table-download"].ajax.url( '/items?' + $(this).serialize()).load();
-            if($("#client").val() !== "") {
+            window.LaravelDataTables["zanetti-table-download"].ajax.url('/items?' + $(this).serialize()).load();
+            if ($("#client").val() !== "") {
                 $(".buttons-csv, .buttons-excel").show();
                 $('#deletableButton').show();
                 $('#downloadZip').show();
@@ -266,7 +265,7 @@
             var selectedClient = $(this).val();
             $('#comune').html('');
             $('#street').html('');
-            if(selectedClient !== '') {
+            if (selectedClient !== '') {
                 $.ajax({
                     url: "items/city_id/" + selectedClient,
                     type: 'GET',
@@ -323,7 +322,7 @@
         }
         // Funzione per resettare i filtri
         function resetFilters() {
-            window.LaravelDataTables["zanetti-table-download"].ajax.url( '/items').load();
+            window.LaravelDataTables["zanetti-table-download"].ajax.url('/items').load();
             $('#fromDate, #toDate').val('');
             $('#client, #comune, #street, #operator').val('').trigger('change.select2');
             $('input[type="checkbox"]').prop('checked', false);
@@ -332,6 +331,7 @@
             hideDeletableButton();
             hideZipButton();
         }
+
         function downloadFileZip(filename, data) {
             var element = document.createElement('a');
             element.setAttribute('href', 'data:application/zip;base64,' + data);
@@ -394,29 +394,30 @@
             let text = "Sei sicuro di voler renedere cancellabili queste caditoie?\nScegli Ok o Annulla.";
             if (confirm(text)) {
                 $.ajax({
-                url: "{{ route('items.deleteSewers') }}",
-                method: "GET",
+                    url: "{{ route('items.deleteSewers') }}",
+                    method: "GET",
                     success: function(response) {
                         console.log(response);
                         var risposta = JSON.parse(response);
                         var modalErrore = $('#modalDeleteErrore');
                         var modalSuccess = $('#modalDeleteSuccess');
 
-                        if(risposta.success == false) {
+                        if (risposta.success == false) {
                             modalErrore.modal('show');
                         } else {
-                            modalSuccess.find('.modal-body span').text(risposta.data.cancellabile.length);
-                            if (risposta.data.non_cancellabile.length === 0) {
+                            var numMadeDeletable = risposta.data.cancellabile.length; // Numero di caditoie rese cancellabili
+                            var numNotMadeDeletable = risposta.data.non_cancellabile.length; // Numero di caditoie che non sono state rese cancellabili
+
+                            modalSuccess.find('.modal-body span').text(numMadeDeletable); // Mostra il numero di caditoie rese cancellabili
+
+                            if (numNotMadeDeletable === 0) {
                                 modalSuccess.find('.modal-body').html('Tutte le caditoie sono cancellabili!');
                             } else {
-                                var numMadeDeletable = risposta.data.cancellabile.length;
-                                var numNotMadeDeletable = risposta.data.non_cancellabile.length;
-                                var difference = numMadeDeletable - numNotMadeDeletable;
-
-                                modalSuccess.find('.modal-body').html('Hai reso cancellabili ' + difference + ' caditoie, ' + risposta.data.non_cancellabile.length + ' di quelle selezionate, lo sono già!');
+                                modalSuccess.find('.modal-body').html('Hai reso cancellabili ' + numMadeDeletable + ' caditoie su ' + (numMadeDeletable + numNotMadeDeletable) + ', ' + numNotMadeDeletable + ' di quelle selezionate lo sono già!');
                             }
                             modalSuccess.modal('show');
                         }
+
                     },
                     error: function(xhr, status, error) {
                         console.error(error);
